@@ -1,7 +1,7 @@
 # Simplify-Shop
 Kristshop which only requires one krist address, without a domain.
 
-### (This tutorial assumes you are running this shop on **SwitchCraft**)
+### (This tutorial and the shop itself assumes you are running this on **SwitchCraft**)
 
 ## Using the shop
 The shop requires 4 things from you to run.
