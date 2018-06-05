@@ -41,7 +41,7 @@ if not fs.exists("jua.lua") then
     shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua","jua.lua")
 end
 if not fs.exists("logger") then
-    shell.run("pastebin","get","J6gQFBai","logger")
+    shell.run("wget","https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua","logger.lua")
 end
 
 
@@ -215,6 +215,12 @@ local function writeCustomization(name)
         hd.writeLine(txt)
     end
     ao("data = {")
+    ao("  LOGGER = {")
+    ao("    doInfoLogging = false,")
+    ao("    doWarnLogging = true,")
+    ao("    LOG_LOCATION = \"logs\",")
+    ao("    LOG_NAME = \"Log\",")
+    ao("  },")
     ao("  owner = \"nobody\",")
     ao("  shopName = \"Unnamed Shop\",")
     ao("  showCustomInfo = true,")

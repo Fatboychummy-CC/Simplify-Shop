@@ -1,7 +1,9 @@
-LOG_LOCATION = "logs/"
-LOG_NAME = "log"
-doInfoLogging = true
-doWarnLogging = true
+local custom = dofile("fatShopCustomization")
+custom = custom.LOGGER
+LOG_LOCATION = custom.LOG_LOCATION
+LOG_NAME = custom.LOG_NAME
+doInfoLogging = custom.doInfoLogging
+doWarnLogging = custom.doWarnLogging
 local fileHandle=false
 
 
