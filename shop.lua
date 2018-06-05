@@ -61,8 +61,9 @@ k.init(jua,json,w,r)
 ---------------------------------------------------
 os.unloadAPI("logger.lua")
 os.loadAPI("logger.lua")
-logger.openLog()
-
+if _G.canLogBeOpened then
+  logger.openLog()
+end
 ----------
 local fatData = "fatItemData"
 local fatCustomization = "fatShopCustomization"
@@ -719,7 +720,9 @@ jua.on("terminate",function()
   jua.stop()
   bsod("Terminated")
   logger.severe("Ah fuck we've been terminated")
-  logger.closeLog()
+  if _G.canLogBeOpened then
+    logger.closeLog()
+  end
   printError("I can't believe you've done this.")
 end)
 
