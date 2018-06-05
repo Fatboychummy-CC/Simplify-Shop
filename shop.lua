@@ -756,7 +756,10 @@ jua.go(function()
                     if item.count > 0 then
                       local paid = tx.value
                       local items_required = math.floor(paid/item.price)
-                      local items_grabbed = grabItems(item.find,item.damage,items_required)
+                      local items_grabbed = grabItems(item.find,item.damage,items_required)\
+                      if items_grabbed > 0 then
+                        logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid)
+                      end
                       local over = paid%item.price
                       local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
                       if item.price > paid then
