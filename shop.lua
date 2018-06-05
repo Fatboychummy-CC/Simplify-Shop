@@ -76,7 +76,7 @@ local pubKey = nil
 local custom = {}
 local chests = {}
 local sIL = {}
-local selection = 1
+local selection = false
 local page = 1
 local mxPages = 1
 local mX = 0
@@ -460,34 +460,34 @@ function getPages()
 end
 
 --Monitor
-function draw(sel,first)
-    if first then
-        mon.setBackgroundColor(custom.farthestBackground.bg)
-        mon.clear()
-        square(2,4,mX-1,mY-4,custom.background.bg)
-        square(2,1,mX-1,3,custom.nameBar.bg)
-        mon.setCursorPos(mX/2-(custom.shopName:len()/2),2)
-        mon.write(custom.shopName)
-        square(2,mY-3,mX-1,mY,custom.infoBar.bg)
-        if not custom.showCustomInfo then
-            local ln1 = "This shop was made by fatmanchummy"
-            local ln2 = "This shop is owned by "..custom.owner
-            mon.setCursorPos(mX/2-(ln1:len()/2),mY-2)
-            mon.write(ln1)
-            mon.setCursorPos(mX/2-(ln2:len()/2),mY-1)
-            mon.write(ln2)
-        else
-            if type(custom.customInfo[1]) == "string" then
-                mon.setCursorPos(mX/2-(custom.customInfo[1]:len()/2),mY-2)
-                mon.write(custom.customInfo[1])
-                if type(custom.customInfo[2]) == "string" then
-                    mon.setCursorPos(mX/2-(custom.customInfo[2]:len()/2),mY-1)
-                    mon.write(custom.customInfo[2])
-                end
-            end
-        end
-    end
+function drawBG()
+  mon.setBackgroundColor(custom.farthestBackground.bg)
+  mon.clear()
+  square(2,4,mX-1,mY-4,custom.background.bg)
+  square(2,1,mX-1,3,custom.nameBar.bg)
+  mon.setCursorPos(mX/2-(custom.shopName:len()/2),2)
+  mon.write(custom.shopName)
+  square(2,mY-3,mX-1,mY,custom.infoBar.bg)
+  if not custom.showCustomInfo then
+      local ln1 = "This shop was made by fatmanchummy"
+      local ln2 = "This shop is owned by "..custom.owner
+      mon.setCursorPos(mX/2-(ln1:len()/2),mY-2)
+      mon.write(ln1)
+      mon.setCursorPos(mX/2-(ln2:len()/2),mY-1)
+      mon.write(ln2)
+  else
+      if type(custom.customInfo[1]) == "string" then
+          mon.setCursorPos(mX/2-(custom.customInfo[1]:len()/2),mY-2)
+          mon.write(custom.customInfo[1])
+          if type(custom.customInfo[2]) == "string" then
+              mon.setCursorPos(mX/2-(custom.customInfo[2]:len()/2),mY-1)
+              mon.write(custom.customInfo[2])
+          end
+      end
+  end
+end
 
+function draw(sel,first)
     local toDraw = custom.itemsDrawnAtOnce
     getPages()
     square(3,5,mX/2+3,7,custom.itemInfoBar.bg)
@@ -500,7 +500,8 @@ function draw(sel,first)
     mon.write("Price")
     square(3,8,mX/2+3,8+toDraw,custom.background.bg)
     for i = 1,toDraw do
-      local cur = i+(#sIL-1)*(page-1)
+      local cur = i+(toDraw)*(page-1)
+      local cur1 = cur
       cur = sIL[cur]
       if cur then
         if i%2 == 1 then
@@ -539,33 +540,42 @@ function draw(sel,first)
     drawButton(buttons.pgDwn)
     if sel then
       local i = sel-7
-      selection = i+(page-1)*(#sIL-1)
+      selection = i+(page-1)*(toDraw)
       local cur = sIL[selection]
-      square(3,sel,mX/2+3,sel,custom.selection.bg)
-      mon.setTextColor(custom.selection.fg)
-      mon.setCursorPos(4,i+7)
-      mon.write(cur.display)
-      mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
-      mon.write(tostring(cur.count))
-      local a = tostring(cur.price):find("%.")
-      mon.setCursorPos(mX/2,i+7)
-      mon.write(".00")
-      if a then
-        mon.setCursorPos(mX/2+a-3,i+7)
+      if cur and i <= toDraw then
+        square(3,sel,mX/2+3,sel,custom.selection.bg)
+        mon.setTextColor(custom.selection.fg)
+        mon.setCursorPos(4,i+7)
+        mon.write(cur.display)
+        mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
+        mon.write(tostring(cur.count))
+        local a = tostring(cur.price):find("%.")
+        mon.setCursorPos(mX/2,i+7)
+        mon.write(".00")
+        if a then
+          mon.setCursorPos(mX/2+a-3,i+7)
+        else
+          mon.setCursorPos(mX/2-1-(tostring(cur.price):len()/2)+0.5,i+7)
+        end
+        mon.write(tostring(cur.price))
+        square(mX/2+5,18,mX-5,25,custom.bigSelection.bg)
+        mon.setTextColor(custom.bigSelection.fg)
+        mon.setCursorPos(mX/2+6,19)
+        mon.write(cur.display)
+        mon.setCursorPos(mX/2+6,20)
+        mon.write(tostring(cur.price).."KST each")
+        mon.setCursorPos(mX/2+6,21)
+        mon.write("x"..tostring(cur.count))
+        mon.setCursorPos(mX/2+6,22)
+        local tPrice = math.ceil(cur.count*cur.price)
+        mon.write("Whole stock price: "..tostring(tPrice))
+        mon.setCursorPos(mX/2+6,24)
+        mon.write("/pay "..pubKey.." "..tPrice)
       else
-        mon.setCursorPos(mX/2-1-(tostring(cur.price):len()/2)+0.5,i+7)
+        square(mX/2+5,18,mX-5,25,custom.background.bg)
       end
-      mon.write(tostring(cur.price))
-      square(mX/2+5,18,mX-5,22,custom.bigSelection.bg)
-      mon.setTextColor(custom.bigSelection.fg)
-      mon.setCursorPos((3*mX)/4-cur.display:len()/2,19)
-      mon.write(cur.display)
-      mon.setCursorPos((3*mX)/4-(tostring(cur.price):len()+3)/2,20)
-      mon.write(tostring(cur.price).."KST")
-      mon.setCursorPos((3*mX)/4-(tostring(cur.count):len()+1)/2,21)
-      mon.write(tostring(cur.count))
     else
-      square(mX/2+5,18,mX-5,22,custom.background.bg)
+      square(mX/2+5,18,mX-5,25,custom.background.bg)
     end
     square(mX/2+5,8,mX-5,16,custom.bigInfo.bg)
     mon.setTextColor(custom.bigInfo.fg)
@@ -676,6 +686,8 @@ end
 checkAllTheThings()
 sortItems()
 refreshItems()
+drawBG()
+draw()
 
 jua.on("timer",function(evt,tmr)
   if tmr == rPressTimer then
@@ -687,7 +699,8 @@ end)
 
 jua.on("monitor_resize",function()
     mX,mY = mon.getSize()
-    draw(nil,true)
+    drawBG()
+    draw()
 end)
 
 jua.on("monitor_touch",function(nm,side,x,y)
@@ -737,12 +750,6 @@ end)
 
 
 jua.go(function()
-    mon.setBackgroundColor(colors.black)
-    mon.setTextColor(colors.white)
-    mon.clear()
-    mon.setCursorPos(1,1)
-    mon.write("We're setting things up")
-    draw(nil,true)
     local success,ws = await(k.connect,privKey)
     if success then
         logger.info("Connected to websocket")
