@@ -40,7 +40,7 @@ end
 if not fs.exists("jua.lua") then
     shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua")
 end
-if not fs.exists("logger") then
+if not fs.exists("logger.lua") then
     shell.run("wget","https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
 end
 
