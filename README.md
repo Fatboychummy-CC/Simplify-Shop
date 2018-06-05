@@ -40,6 +40,18 @@ Each item is organized like so:
 ```
 If there is an error in one of the items, a built in check will notify you of the error at startup.
 
+### Extra "dot" files
+There are three "dot" files in total;
+`.privKey`
+`.monitor`
+`.turtle`
+Only the dot-file, "privKey" is a required file, the other two are only required if multiple monitors or turtles are connected to your network.  For `.monitor` and `.turtle`, simply write the name of the monitor or turtle that you want to be connected to.
+Example:
+If your monitor is named, "monitor_123", the content of `.monitor` would simply be:
+```
+monitor_123
+```
+
 ## Using the shop itself
 Since there is no domain, and the shop itself only runs with one krist address, an item must be 'selected' before it can be purchased.
 To select an item, simply right-click on one of the items on the monitor.  Depending on the state of your `selection` table in your `fatShopCustomization` file, the selected item will change color and appear in the Information Box.  Once the item is there, simply do as you would with any other shop, and run the command:
