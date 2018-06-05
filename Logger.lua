@@ -5,6 +5,7 @@ local LOG_NAME = false
 local doInfoLogging = false
 local doWarnLogging = false
 _G.canLogBeOpened = false
+local fileHandle="NothingYet"
 if fs.exists("fatShopCustomization") then
   custom = dofile("fatShopCustomization")
   _G.canLogBeOpened = true
@@ -13,7 +14,7 @@ if fs.exists("fatShopCustomization") then
   LOG_NAME = custom.LOG_NAME
   doInfoLogging = custom.doInfoLogging
   doWarnLogging = custom.doWarnLogging
-  local fileHandle=false
+
 
   function openLog()
     local logName = LOG_LOCATION..LOG_NAME
