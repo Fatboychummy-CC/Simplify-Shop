@@ -26,7 +26,7 @@ if fs.exists("fatShopCustomization") then
       repeat
         i = i + 1
       until not fs.exists(logName..tostring(i))
-        fileHandle = fs.open(logName..tostring(i),"a")
+        fileHandle = fs.open(logName..tostring(i),"w")
     end
     if fileHandle then
       info("File is opened for logging")
