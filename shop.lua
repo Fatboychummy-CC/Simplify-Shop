@@ -45,7 +45,7 @@ if true then
   local v = tonumber(handle.readLine())
   local noRequire = handle.readLine()
   local notes = handle.readLine()
-
+  print(v<version and v.." < "..version or v.." > "..version)
   handle.close()
   if v > version then
     print("There is an update available.")
