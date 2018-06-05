@@ -6,6 +6,7 @@ local doInfoLogging = false
 local doWarnLogging = false
 _G.canLogBeOpened = false
 if fs.exists("fatShopCustomization") then
+  custom = dofile("fatShopCustomization")
   _G.canLogBeOpened = true
   custom = custom.LOGGER
   LOG_LOCATION = custom.LOG_LOCATION
