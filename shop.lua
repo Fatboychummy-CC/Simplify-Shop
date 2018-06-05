@@ -26,22 +26,22 @@ Fix them errors
 
 
 if not fs.exists("w.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/w.lua/master/w.lua","w.lua")
+    shell.run("wget","https://raw.githubusercontent.com/justync7/w.lua/master/w.lua")
 end
 if not fs.exists("r.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/r.lua/master/r.lua","r.lua")
+    shell.run("wget","https://raw.githubusercontent.com/justync7/r.lua/master/r.lua")
 end
 if not fs.exists("k.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/k.lua/master/k.lua","k.lua")
+    shell.run("wget","https://raw.githubusercontent.com/justync7/k.lua/master/k.lua")
 end
 if not fs.exists("json.lua") then
     shell.run("pastebin","get","4nRg9CHU","json.lua")
 end
 if not fs.exists("jua.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua","jua.lua")
+    shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua")
 end
 if not fs.exists("logger") then
-    shell.run("wget","https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua","logger")
+    shell.run("wget","https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
 end
 
 
