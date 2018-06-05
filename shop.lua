@@ -1,9 +1,9 @@
 --[[
-0.9
+1
 noRequire
 Finished touchBeat; Fixed some errors in drawButton(); Fixed some errors in grabItems(); Added the free cobble button; Preparation for Information Panel
 ]]
-local version = 0.9
+local version = 1
 
 --[[
     SIMPLIFY Shop
