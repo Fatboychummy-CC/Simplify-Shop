@@ -1,38 +1,45 @@
-local custom = dofile("fatShopCustomization")
-custom = custom.LOGGER
-LOG_LOCATION = custom.LOG_LOCATION
-LOG_NAME = custom.LOG_NAME
-doInfoLogging = custom.doInfoLogging
-doWarnLogging = custom.doWarnLogging
-local fileHandle=false
+local custom = false
 
+local LOG_LOCATION = false
+local LOG_NAME = false
+local doInfoLogging = false
+local doWarnLogging = false
+_G.canLogBeOpened = false
+if fs.exists("fatShopCustomization") then
+  _G.canLogBeOpened = true
+  custom = custom.LOGGER
+  LOG_LOCATION = custom.LOG_LOCATION
+  LOG_NAME = custom.LOG_NAME
+  doInfoLogging = custom.doInfoLogging
+  doWarnLogging = custom.doWarnLogging
+  local fileHandle=false
 
-function openLog()
-  local logName = LOG_LOCATION..LOG_NAME.."1"
-  if not fs.exists(LOG_LOCATION) then
-    fs.makeDir(LOG_LOCATION)
-    fileHandle = fs.open(logName.."1","a")
-  else
-    local i = 1
-    local logName2 = logName..tostring(i)
-    repeat
-      i = i + 1
-    until not fs.exists(logName..tostring(i))
-      fileHandle = fs.open(logName2,"a")
+  function openLog()
+    local logName = LOG_LOCATION..LOG_NAME
+    if not fs.exists(LOG_LOCATION) then
+      fs.makeDir(LOG_LOCATION)
+      fileHandle = fs.open(logName.."1","a")
+    else
+      local i = 1
+      local logName2 = logName..tostring(i)
+      repeat
+        i = i + 1
+      until not fs.exists(logName..tostring(i))
+        fileHandle = fs.open(logName2,"a")
+    end
+    if fileHandle then
+      info("File is opened for logging")
+    else
+      severe("Could not open a file for logging.")
+    end
   end
-  if fileHandle then
-    info("File is opened for logging")
-  else
-    severe("Could not open a file for logging.")
-  end
-end
-function closeLog()
-  if fileHandle then
-    fileHandle.close()
-    fileHandle = false
-    info("Log has been closed")
-  else
-    warn("Cannot close a log if it is not opened.")
+  function closeLog()
+    if fileHandle then
+      fileHandle.close()
+      info("Log has been closed")
+    else
+      warn("Cannot close a log if it is not opened.")
+    end
   end
 end
 function purchaseLog(item,amount,price)
@@ -53,6 +60,10 @@ function purchaseLog(item,amount,price)
     term.write("[PURCHASE]: ")
   end
   print(item.."["..tostring(amount).."] for "..tostring(price)..".")
+  if fileHandle then
+    fileHandle.writeLine("--[PURCHASE]: "..tostring(amount).." of "..item.." for "..tostring(price).." krist.")
+    fileHandle.flush()
+  end
 end
 function info(notif)
     print(notif and "[INFO]: "..notif or "[INFO]: ?")
