@@ -59,8 +59,8 @@ k.init(jua,json,w,r)
 
 
 ---------------------------------------------------
-os.unloadAPI("logger")
-os.loadAPI("logger")
+os.unloadAPI("logger.lua")
+os.loadAPI("logger.lua")
 logger.openLog()
 
 ----------
