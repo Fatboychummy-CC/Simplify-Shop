@@ -1,7 +1,7 @@
 --[[
 1
 noRequire
-Finished touchBeat; Fixed some errors in drawButton(); Fixed some errors in grabItems(); Added the free cobble button; Preparation for Information Panel
+Finished Information panel, Finished auto-updater, OUT OF BETA WOOOO
 ]]
 local version = 1
 
