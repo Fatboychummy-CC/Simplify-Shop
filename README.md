@@ -42,9 +42,9 @@ If there is an error in one of the items, a built in check will notify you of th
 
 ### Extra "dot" files
 There are three "dot" files in total;
-`.privKey`
-`.monitor`
-`.turtle`
+1. `.privKey`,
+2. `.monitor`,
+3. `.turtle`.
 Only the dot-file, "privKey" is a required file, the other two are only required if multiple monitors or turtles are connected to your network.  For `.monitor` and `.turtle`, simply write the name of the monitor or turtle that you want to be connected to.
 Example:
 If your monitor is named, "monitor_123", the content of `.monitor` would simply be:
