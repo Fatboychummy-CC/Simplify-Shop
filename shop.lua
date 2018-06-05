@@ -270,6 +270,10 @@ local function writeCustomization(name)
     ao("    bg = colors.white,")
     ao("    fg = colors.black,")
     ao("  },")
+    ao("  bigSelection = {")
+    ao("    bg = colors.black,")
+    ao("    fg = colors.white,")
+    ao("  },")
     ao("  bigInfo = {")
     ao("    bg = colors.black,")
     ao("    fg = colors.white,")
@@ -584,6 +588,7 @@ function draw(sel,first)
       mon.setCursorPos((3*mX)/4-ln4:len()/2,14)
       mon.write(ln4)
     end
+
     if custom.touchHereForCobbleButton then
       buttons.cobble.enabled = true
       drawButton(buttons.cobble)
