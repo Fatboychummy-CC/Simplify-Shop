@@ -8,7 +8,7 @@ local fileHandle=false
 
 
 function openLog()
-  local logName = LOG_LOCATION..LOG_NAME
+  local logName = LOG_LOCATION..LOG_NAME.."1"
   if not fs.exists(LOG_LOCATION) then
     fs.makeDir(LOG_LOCATION)
     fileHandle = fs.open(logName.."1","a")
