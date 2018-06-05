@@ -556,6 +556,16 @@ function draw(sel,first)
         mon.setCursorPos(mX/2-1-(tostring(cur.price):len()/2)+0.5,i+7)
       end
       mon.write(tostring(cur.price))
+      square(mX/2+5,18,mX-5,22,custom.bigSelection.bg)
+      mon.setTextColor(custom.bigSelection.fg)
+      mon.setCursorPos((3*mX)/4-cur.display:len()/2,19)
+      mon.write(cur.display)
+      mon.setCursorPos((3*mX)/4-(tostring(cur.price):len()+3)/2,20)
+      mon.write(tostring(cur.price).."KST")
+      mon.setCursorPos((3*mX)/4-(tostring(cur.count):len()+1)/2,21)
+      mon.write(tostring(cur.count))
+    else
+      square(mX/2+5,18,mX-5,22,custom.background.bg)
     end
     square(mX/2+5,8,mX-5,16,custom.bigInfo.bg)
     mon.setTextColor(custom.bigInfo.fg)
@@ -587,7 +597,6 @@ function draw(sel,first)
       mon.setCursorPos((3*mX)/4-ln4:len()/2,14)
       mon.write(ln4)
     end
-
     if custom.touchHereForCobbleButton then
       buttons.cobble.enabled = true
       drawButton(buttons.cobble)
