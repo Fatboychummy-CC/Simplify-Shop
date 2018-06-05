@@ -1,9 +1,9 @@
 --[[
-V0.9
-BETA
+0.9
+noRequire
 Finished touchBeat; Fixed some errors in drawButton(); Fixed some errors in grabItems(); Added the free cobble button; Preparation for Information Panel
 ]]
-
+local version = 0.9
 
 --[[
     SIMPLIFY Shop
@@ -13,15 +13,9 @@ made by fatmanchummy
 
 
 --[[ToDo:
-----------IMPORTANTEST THING
-INFORMATION DISPLAY TO DISPLAY THE KRIST ADDRESS THAT THE BUYER SHOULD SEND MONEY TO, ALONG WITH OTHER USEFUL INFORMATIONS
-----------------------------
 Helpfile
 Refund stuff
-More customization
 Single chest rather than modem chests
-Updater
-Fix them errors
 ]]
 
 
@@ -44,6 +38,53 @@ if not fs.exists("logger.lua") then
     shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua logger.lua")
 end
 
+------CHECK FOR UPDATES
+if true then
+  local handle = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/shop.lua")
+  handle.readLine()
+  local v = tonumber(handle.readLine())
+  local noRequire = handle.readLine()
+  local notes = handle.readLine()
+
+  handle.close()
+  if v > version then
+    print("There is an update available.")
+    print("Update notes: "..notes)
+    print("Would you like to do the update now? (Y/N)")
+    local utm = os.startTimer(30)
+    local yes = false
+    while true do
+      local a = {os.pullEvent()}
+      if a[1] == "char" then
+        if a[2] == "y" then
+          fs.delete(shell.getRunningProgram())
+          shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/shop.lua startup")
+          if noRequire == "noRequire" then
+            print("New Logger file is not required")
+          else
+            print("New logger file is required.")
+            fs.delete("logger.lua")
+            shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua logger.lua")
+          end
+          print("Update complete, rebooting...")
+          os.sleep(2)
+          os.reboot()
+        elseif a[2] == "n" then
+          break
+        end
+      elseif a[1] == "timer" and a[2] == utm then
+        break
+      end
+    end
+    if yes then
+    else
+      print("Timed out or skipping update.")
+    end
+  else
+    print("Up to date.")
+  end
+end
+------END
 
 local w = require("w")
 local r = require("r")
