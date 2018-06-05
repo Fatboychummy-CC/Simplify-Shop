@@ -1,9 +1,9 @@
 --[[
-V0.9
-BETA
+0.9
+noRequire
 Finished touchBeat; Fixed some errors in drawButton(); Fixed some errors in grabItems(); Added the free cobble button; Preparation for Information Panel
 ]]
-
+local version = 0.9
 
 --[[
     SIMPLIFY Shop
@@ -13,37 +13,78 @@ made by fatmanchummy
 
 
 --[[ToDo:
-----------IMPORTANTEST THING
-INFORMATION DISPLAY TO DISPLAY THE KRIST ADDRESS THAT THE BUYER SHOULD SEND MONEY TO, ALONG WITH OTHER USEFUL INFORMATIONS
-----------------------------
 Helpfile
 Refund stuff
-More customization
 Single chest rather than modem chests
-Updater
-Fix them errors
 ]]
 
 
 if not fs.exists("w.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/w.lua/master/w.lua","w.lua")
+    shell.run("wget","https://raw.githubusercontent.com/justync7/w.lua/master/w.lua")
 end
 if not fs.exists("r.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/r.lua/master/r.lua","r.lua")
+    shell.run("wget","https://raw.githubusercontent.com/justync7/r.lua/master/r.lua")
 end
 if not fs.exists("k.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/k.lua/master/k.lua","k.lua")
+    shell.run("wget","https://raw.githubusercontent.com/justync7/k.lua/master/k.lua")
 end
 if not fs.exists("json.lua") then
     shell.run("pastebin","get","4nRg9CHU","json.lua")
 end
 if not fs.exists("jua.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua","jua.lua")
+    shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua")
 end
-if not fs.exists("logger") then
-    shell.run("wget","https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua","logger.lua")
+if not fs.exists("logger.lua") then
+    shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua logger.lua")
 end
 
+------CHECK FOR UPDATES
+if true then
+  local handle = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/shop.lua")
+  handle.readLine()
+  local v = tonumber(handle.readLine())
+  local noRequire = handle.readLine()
+  local notes = handle.readLine()
+
+  handle.close()
+  if v > version then
+    print("There is an update available.")
+    print("Update notes: "..notes)
+    print("Would you like to do the update now? (Y/N)")
+    local utm = os.startTimer(30)
+    local yes = false
+    while true do
+      local a = {os.pullEvent()}
+      if a[1] == "char" then
+        if a[2] == "y" then
+          fs.delete(shell.getRunningProgram())
+          shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/shop.lua startup")
+          if noRequire == "noRequire" then
+            print("New Logger file is not required")
+          else
+            print("New logger file is required.")
+            fs.delete("logger.lua")
+            shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua logger.lua")
+          end
+          print("Update complete, rebooting...")
+          os.sleep(2)
+          os.reboot()
+        elseif a[2] == "n" then
+          break
+        end
+      elseif a[1] == "timer" and a[2] == utm then
+        break
+      end
+    end
+    if yes then
+    else
+      print("Timed out or skipping update.")
+    end
+  else
+    print("Up to date.")
+  end
+end
+------END
 
 local w = require("w")
 local r = require("r")
@@ -59,10 +100,11 @@ k.init(jua,json,w,r)
 
 
 ---------------------------------------------------
-os.unloadAPI("logger")
-os.loadAPI("logger")
-logger.openLog()
-
+os.unloadAPI("logger.lua")
+os.loadAPI("logger.lua")
+if _G.canLogBeOpened then
+  logger.openLog()
+end
 ----------
 local fatData = "fatItemData"
 local fatCustomization = "fatShopCustomization"
@@ -75,7 +117,7 @@ local pubKey = nil
 local custom = {}
 local chests = {}
 local sIL = {}
-local selection = 1
+local selection = false
 local page = 1
 local mxPages = 1
 local mX = 0
@@ -84,7 +126,6 @@ local ws
 local buttons = {}
 local recentPress = false
 local rPressTimer = "nothing to see yet"
-local touchBeatTimer = "nothing to see yet"
 
 if fs.exists(".turtle") then
     local hd = fs.open(".turtle","r")
@@ -218,7 +259,7 @@ local function writeCustomization(name)
     ao("  LOGGER = {")
     ao("    doInfoLogging = false,")
     ao("    doWarnLogging = true,")
-    ao("    LOG_LOCATION = \"logs\",")
+    ao("    LOG_LOCATION = \"logs/\",")
     ao("    LOG_NAME = \"Log\",")
     ao("  },")
     ao("  owner = \"nobody\",")
@@ -236,7 +277,6 @@ local function writeCustomization(name)
     ao("    [ 4 ] = \"Up to four lines are permitted\",")
     ao("  },")
     ao("  touchHereForCobbleButton = true,")
-    ao("  touchBeat = true,")
     ao("  dropSide = \"top\", -- the side the turtle will drop from, accepts 'top', 'bottom', and 'front'")
     ao("  itemsDrawnAtOnce = 7,")
     ao("  farthestBackground = {")
@@ -269,6 +309,10 @@ local function writeCustomization(name)
     ao("  selection = {")
     ao("    bg = colors.white,")
     ao("    fg = colors.black,")
+    ao("  },")
+    ao("  bigSelection = {")
+    ao("    bg = colors.black,")
+    ao("    fg = colors.white,")
     ao("  },")
     ao("  bigInfo = {")
     ao("    bg = colors.black,")
@@ -457,34 +501,34 @@ function getPages()
 end
 
 --Monitor
-function draw(sel,first)
-    if first then
-        mon.setBackgroundColor(custom.farthestBackground.bg)
-        mon.clear()
-        square(2,4,mX-1,mY-4,custom.background.bg)
-        square(2,1,mX-1,3,custom.nameBar.bg)
-        mon.setCursorPos(mX/2-(custom.shopName:len()/2),2)
-        mon.write(custom.shopName)
-        square(2,mY-3,mX-1,mY,custom.infoBar.bg)
-        if not custom.showCustomInfo then
-            local ln1 = "This shop was made by fatmanchummy"
-            local ln2 = "This shop is owned by "..custom.owner
-            mon.setCursorPos(mX/2-(ln1:len()/2),mY-2)
-            mon.write(ln1)
-            mon.setCursorPos(mX/2-(ln2:len()/2),mY-1)
-            mon.write(ln2)
-        else
-            if type(custom.customInfo[1]) == "string" then
-                mon.setCursorPos(mX/2-(custom.customInfo[1]:len()/2),mY-2)
-                mon.write(custom.customInfo[1])
-                if type(custom.customInfo[2]) == "string" then
-                    mon.setCursorPos(mX/2-(custom.customInfo[2]:len()/2),mY-1)
-                    mon.write(custom.customInfo[2])
-                end
-            end
-        end
-    end
+function drawBG()
+  mon.setBackgroundColor(custom.farthestBackground.bg)
+  mon.clear()
+  square(2,4,mX-1,mY-4,custom.background.bg)
+  square(2,1,mX-1,3,custom.nameBar.bg)
+  mon.setCursorPos(mX/2-(custom.shopName:len()/2),2)
+  mon.write(custom.shopName)
+  square(2,mY-3,mX-1,mY,custom.infoBar.bg)
+  if not custom.showCustomInfo then
+      local ln1 = "This shop was made by fatmanchummy"
+      local ln2 = "This shop is owned by "..custom.owner
+      mon.setCursorPos(mX/2-(ln1:len()/2),mY-2)
+      mon.write(ln1)
+      mon.setCursorPos(mX/2-(ln2:len()/2),mY-1)
+      mon.write(ln2)
+  else
+      if type(custom.customInfo[1]) == "string" then
+          mon.setCursorPos(mX/2-(custom.customInfo[1]:len()/2),mY-2)
+          mon.write(custom.customInfo[1])
+          if type(custom.customInfo[2]) == "string" then
+              mon.setCursorPos(mX/2-(custom.customInfo[2]:len()/2),mY-1)
+              mon.write(custom.customInfo[2])
+          end
+      end
+  end
+end
 
+function draw(sel,first)
     local toDraw = custom.itemsDrawnAtOnce
     getPages()
     square(3,5,mX/2+3,7,custom.itemInfoBar.bg)
@@ -497,7 +541,8 @@ function draw(sel,first)
     mon.write("Price")
     square(3,8,mX/2+3,8+toDraw,custom.background.bg)
     for i = 1,toDraw do
-      local cur = i+(#sIL-1)*(page-1)
+      local cur = i+(toDraw)*(page-1)
+      local cur1 = cur
       cur = sIL[cur]
       if cur then
         if i%2 == 1 then
@@ -536,23 +581,42 @@ function draw(sel,first)
     drawButton(buttons.pgDwn)
     if sel then
       local i = sel-7
-      selection = i+(page-1)*(#sIL-1)
+      selection = i+(page-1)*(toDraw)
       local cur = sIL[selection]
-      square(3,sel,mX/2+3,sel,custom.selection.bg)
-      mon.setTextColor(custom.selection.fg)
-      mon.setCursorPos(4,i+7)
-      mon.write(cur.display)
-      mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
-      mon.write(tostring(cur.count))
-      local a = tostring(cur.price):find("%.")
-      mon.setCursorPos(mX/2,i+7)
-      mon.write(".00")
-      if a then
-        mon.setCursorPos(mX/2+a-3,i+7)
+      if cur and i <= toDraw then
+        square(3,sel,mX/2+3,sel,custom.selection.bg)
+        mon.setTextColor(custom.selection.fg)
+        mon.setCursorPos(4,i+7)
+        mon.write(cur.display)
+        mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
+        mon.write(tostring(cur.count))
+        local a = tostring(cur.price):find("%.")
+        mon.setCursorPos(mX/2,i+7)
+        mon.write(".00")
+        if a then
+          mon.setCursorPos(mX/2+a-3,i+7)
+        else
+          mon.setCursorPos(mX/2-1-(tostring(cur.price):len()/2)+0.5,i+7)
+        end
+        mon.write(tostring(cur.price))
+        square(mX/2+5,18,mX-5,25,custom.bigSelection.bg)
+        mon.setTextColor(custom.bigSelection.fg)
+        mon.setCursorPos(mX/2+6,19)
+        mon.write(cur.display)
+        mon.setCursorPos(mX/2+6,20)
+        mon.write(tostring(cur.price).."KST each")
+        mon.setCursorPos(mX/2+6,21)
+        mon.write("x"..tostring(cur.count))
+        mon.setCursorPos(mX/2+6,22)
+        local tPrice = math.ceil(cur.count*cur.price)
+        mon.write("Whole stock price: "..tostring(tPrice))
+        mon.setCursorPos(mX/2+6,24)
+        mon.write("/pay "..pubKey.." "..tPrice)
       else
-        mon.setCursorPos(mX/2-1-(tostring(cur.price):len()/2)+0.5,i+7)
+        square(mX/2+5,18,mX-5,25,custom.background.bg)
       end
-      mon.write(tostring(cur.price))
+    else
+      square(mX/2+5,18,mX-5,25,custom.background.bg)
     end
     square(mX/2+5,8,mX-5,16,custom.bigInfo.bg)
     mon.setTextColor(custom.bigInfo.fg)
@@ -615,14 +679,6 @@ buttons = {
       content = "Free Cobble",
       enabled = false,
     },
-    touchBeat = {
-      x1 = 29,
-      y1 = mY-7,
-      x2 = 35,
-      y2 = mY-5,
-      content = "CHECK",
-      enabled = false,
-    },
     pgUp = {
         x1 = 17,
         y1 = mY-7,
@@ -671,6 +727,8 @@ end
 checkAllTheThings()
 sortItems()
 refreshItems()
+drawBG()
+draw()
 
 jua.on("timer",function(evt,tmr)
   if tmr == rPressTimer then
@@ -682,7 +740,8 @@ end)
 
 jua.on("monitor_resize",function()
     mX,mY = mon.getSize()
-    draw(nil,true)
+    drawBG()
+    draw()
 end)
 
 jua.on("monitor_touch",function(nm,side,x,y)
@@ -704,10 +763,6 @@ jua.on("monitor_touch",function(nm,side,x,y)
           draw()
         elseif pressed == "cobble" then
           grabItems("minecraft:cobblestone",0,64)
-        elseif pressed == "touchBeat" then
-          buttons.touchBeat.enabled = false
-          drawButton(buttons.touchBeat)
-          touchBeatTimer = os.startTimer(1)
         end
     end
 end)
@@ -728,18 +783,14 @@ jua.on("terminate",function()
   jua.stop()
   bsod("Terminated")
   logger.severe("Ah fuck we've been terminated")
-  logger.closeLog()
+  if _G.canLogBeOpened then
+    logger.closeLog()
+  end
   printError("I can't believe you've done this.")
 end)
 
 
 jua.go(function()
-    mon.setBackgroundColor(colors.black)
-    mon.setTextColor(colors.white)
-    mon.clear()
-    mon.setCursorPos(1,1)
-    mon.write("We're setting things up")
-    draw(nil,true)
     local success,ws = await(k.connect,privKey)
     if success then
         logger.info("Connected to websocket")
@@ -763,6 +814,9 @@ jua.go(function()
                       local paid = tx.value
                       local items_required = math.floor(paid/item.price)
                       local items_grabbed = grabItems(item.find,item.damage,items_required)
+                      if items_grabbed > 0 then
+                        logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid)
+                      end
                       local over = paid%item.price
                       local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
                       if item.price > paid then
