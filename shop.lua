@@ -84,7 +84,6 @@ local ws
 local buttons = {}
 local recentPress = false
 local rPressTimer = "nothing to see yet"
-local touchBeatTimer = "nothing to see yet"
 
 if fs.exists(".turtle") then
     local hd = fs.open(".turtle","r")
@@ -236,7 +235,6 @@ local function writeCustomization(name)
     ao("    [ 4 ] = \"Up to four lines are permitted\",")
     ao("  },")
     ao("  touchHereForCobbleButton = true,")
-    ao("  touchBeat = true,")
     ao("  dropSide = \"top\", -- the side the turtle will drop from, accepts 'top', 'bottom', and 'front'")
     ao("  itemsDrawnAtOnce = 7,")
     ao("  farthestBackground = {")
@@ -620,14 +618,6 @@ buttons = {
       content = "Free Cobble",
       enabled = false,
     },
-    touchBeat = {
-      x1 = 29,
-      y1 = mY-7,
-      x2 = 35,
-      y2 = mY-5,
-      content = "CHECK",
-      enabled = false,
-    },
     pgUp = {
         x1 = 17,
         y1 = mY-7,
@@ -709,10 +699,6 @@ jua.on("monitor_touch",function(nm,side,x,y)
           draw()
         elseif pressed == "cobble" then
           grabItems("minecraft:cobblestone",0,64)
-        elseif pressed == "touchBeat" then
-          buttons.touchBeat.enabled = false
-          drawButton(buttons.touchBeat)
-          touchBeatTimer = os.startTimer(1)
         end
     end
 end)
