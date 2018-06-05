@@ -19,14 +19,14 @@ if fs.exists("fatShopCustomization") then
     local logName = LOG_LOCATION..LOG_NAME
     if not fs.exists(LOG_LOCATION) then
       fs.makeDir(LOG_LOCATION)
-      fileHandle = fs.open(logName.."1","a")
+      fileHandle = fs.open(logName.."1","w")
     else
       local i = 1
       local logName2 = logName..tostring(i)
       repeat
         i = i + 1
       until not fs.exists(logName..tostring(i))
-        fileHandle = fs.open(logName2,"a")
+        fileHandle = fs.open(logName..tostring(i),"a")
     end
     if fileHandle then
       info("File is opened for logging")
@@ -36,6 +36,7 @@ if fs.exists("fatShopCustomization") then
   end
   function closeLog()
     if fileHandle then
+      fileHandle.flush()
       fileHandle.close()
       info("Log has been closed")
     else
