@@ -1,9 +1,9 @@
 --[[
-1
+1.01
 noRequire
-Finished Information panel, Finished auto-updater, OUT OF BETA WOOOO
+Fixed a small issue with displaying prices with length > 1 (ie 25, 100, 1000)
 ]]
-local version = 1
+local version = 1.01
 
 --[[
     SIMPLIFY Shop
@@ -562,7 +562,7 @@ function draw(sel,first)
         if a then
           mon.setCursorPos(mX/2+a-3,i+7)
         else
-          mon.setCursorPos(mX/2-1-(tostring(cur.price):len()/2)+0.5,i+7)
+          mon.setCursorPos(mX/2-tostring(cur.price):len(),i+7)
         end
         mon.write(tostring(cur.price))
       end
@@ -596,7 +596,7 @@ function draw(sel,first)
         if a then
           mon.setCursorPos(mX/2+a-3,i+7)
         else
-          mon.setCursorPos(mX/2-1-(tostring(cur.price):len()/2)+0.5,i+7)
+          mon.setCursorPos(mX/2-tostring(cur.price):len(),i+7)
         end
         mon.write(tostring(cur.price))
         square(mX/2+5,18,mX-5,25,custom.bigSelection.bg)
