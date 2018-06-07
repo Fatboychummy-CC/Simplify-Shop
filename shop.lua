@@ -1,7 +1,7 @@
 --[[
 1.05
 noRequire
-Added custom refund messages, and fixed a part of checkCustomization
+Added custom refund messages, and fixed a part of checkCustomization.  YOU MAY HAVE TO MANUALLY UPDATE THE FATSHOPCUSTOMIZATION FILE!
 ]]
 local version = 1.05
 
