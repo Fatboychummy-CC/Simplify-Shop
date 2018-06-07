@@ -1,7 +1,7 @@
 --[[
 1.05
 noRequire
-Added custom refund messages, and fixed a part of checkCustomization.  YOU MAY HAVE TO MANUALLY UPDATE THE FATSHOPCUSTOMIZATION FILE!
+Added custom refund messages, and fixed a part of checkCustomization.  Added function fixCustomization for updates.
 ]]
 local version = 1.05
 
@@ -256,7 +256,7 @@ local function writeCustomization(name)
         hd.writeLine(txt)
     end
     ao("data = {")
-    ao("REFUNDS = {")
+    ao("  REFUNDS = {")
     ao("    noItemSelected = \"There is no item selected!\",")
     ao("    underpay = \"You seem to have underpaid.\",")
     ao("    change = \"You overpaid by a small amount, here's your change!\",")
@@ -338,6 +338,43 @@ local function writeCustomization(name)
     hd.close()
 end
 
+--THIS FUNCTION WILL CONTINUALLY CHANGE DEPENDING ON THE VERSION
+function fixCustomization(key)
+  logger.info("Attempting to fix "..key)
+  if key == "REFUNDS" then
+    local hand = fs.open(fatCustomization,"r")
+    local lines = {}
+    local i = 1
+    repeat
+      local line = hand.readLine()
+      lines[i] = line
+      i = i + 1
+    until not line
+    hand.close()
+    fs.delete(fatCustomization)
+    hand = fs.open(fatCustomization,"w")
+    local function ao(a)
+      hand.writeLine(a)
+    end
+    ao(lines[1])
+    ao("  REFUNDS = {")
+    ao("    noItemSelected = \"There is no item selected!\",")
+    ao("    underpay = \"You seem to have underpaid.\",")
+    ao("    change = \"You overpaid by a small amount, here's your change!\",")
+    ao("    badAddress = \"Use /pay, do not transfer directly from another address!\",")
+    ao("    outOfStock = \"We do not have any stock of that item!\",")
+    ao("  },")
+    for i = 2,#lines do
+      ao(lines[i])
+    end
+    hand.close()
+    logger.info("Potential fix complete.  Rebooting")
+    os.sleep(2)
+    os.reboot()
+  end
+  logger.warn("Could not fix "..key)
+end
+
 if not fs.exists(fatCustomization) then
     writeCustomization(fatCustomization)
     logger.warn("No customization file, wrote default customization file.")
@@ -357,6 +394,7 @@ function checkCustomization()
     end
     local function typeWarn(k,exp)
         logger.severe(k..": expected "..exp..", got "..type(custom[k]))
+        fixCustomization(k)
     end
     for k,v in pairs(c2) do
         if type(v) ~= type(custom[k]) then
