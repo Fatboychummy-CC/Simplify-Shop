@@ -1,14 +1,14 @@
 --[[
-1.01
+1.05
 noRequire
-Fixed a small issue with displaying prices with length > 1 (ie 25, 100, 1000)
+Added custom refund messages, and fixed a part of checkCustomization.  Added function fixCustomization for updates.
 ]]
-local version = 1.01
+local version = 1.05
 
 --[[
     SIMPLIFY Shop
 made by fatmanchummy
-----Free to use, do not redistribute
+----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
 
@@ -256,6 +256,13 @@ local function writeCustomization(name)
         hd.writeLine(txt)
     end
     ao("data = {")
+    ao("  REFUNDS = {")
+    ao("    noItemSelected = \"There is no item selected!\",")
+    ao("    underpay = \"You seem to have underpaid.\",")
+    ao("    change = \"You overpaid by a small amount, here's your change!\",")
+    ao("    badAddress = \"Use /pay, do not transfer directly from another address!\",")
+    ao("    outOfStock = \"We do not have any stock of that item!\",")
+    ao("  },")
     ao("  LOGGER = {")
     ao("    doInfoLogging = false,")
     ao("    doWarnLogging = true,")
@@ -331,6 +338,43 @@ local function writeCustomization(name)
     hd.close()
 end
 
+--THIS FUNCTION WILL CONTINUALLY CHANGE DEPENDING ON THE VERSION
+function fixCustomization(key)
+  logger.info("Attempting to fix "..key)
+  if key == "REFUNDS" then
+    local hand = fs.open(fatCustomization,"r")
+    local lines = {}
+    local i = 1
+    repeat
+      local line = hand.readLine()
+      lines[i] = line
+      i = i + 1
+    until not line
+    hand.close()
+    fs.delete(fatCustomization)
+    hand = fs.open(fatCustomization,"w")
+    local function ao(a)
+      hand.writeLine(a)
+    end
+    ao(lines[1])
+    ao("  REFUNDS = {")
+    ao("    noItemSelected = \"There is no item selected!\",")
+    ao("    underpay = \"You seem to have underpaid.\",")
+    ao("    change = \"You overpaid by a small amount, here's your change!\",")
+    ao("    badAddress = \"Use /pay, do not transfer directly from another address!\",")
+    ao("    outOfStock = \"We do not have any stock of that item!\",")
+    ao("  },")
+    for i = 2,#lines do
+      ao(lines[i])
+    end
+    hand.close()
+    logger.info("Potential fix complete.  Rebooting")
+    os.sleep(2)
+    os.reboot()
+  end
+  logger.warn("Could not fix "..key)
+end
+
 if not fs.exists(fatCustomization) then
     writeCustomization(fatCustomization)
     logger.warn("No customization file, wrote default customization file.")
@@ -350,6 +394,7 @@ function checkCustomization()
     end
     local function typeWarn(k,exp)
         logger.severe(k..": expected "..exp..", got "..type(custom[k]))
+        fixCustomization(k)
     end
     for k,v in pairs(c2) do
         if type(v) ~= type(custom[k]) then
@@ -359,7 +404,7 @@ function checkCustomization()
             for k2,v2 in pairs(v) do
                 if type(custom[k]) == "table" then
                     if type(v2) ~= type(custom[k][k2]) then
-                        logger.severe("Table "..k.."'s item '"..k2.."' should be of type "..type(v)..", but is of type "..type(custom[k][k2]))
+                        logger.severe("Table "..k.."'s item '"..k2.."' should be of type "..type(v2)..", but is of type "..type(custom[k][k2]))
                     end
                 end
             end
@@ -805,7 +850,7 @@ jua.go(function()
                     meta = k.parseMeta(tx.metadata)
                 end
                 if not meta.meta["return"] and tx.to == pubKey then
-                    refund(tx.from,tx.value,"Use /pay, do not transfer directly from another address.")
+                    refund(tx.from,tx.value,custom.REFUNDS.badAddress)
                 end
                 if selection and tx.to == pubKey then
                     logger.info("Payment being processed.")
@@ -820,22 +865,22 @@ jua.go(function()
                       local over = paid%item.price
                       local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
                       if item.price > paid then
-                        refund(meta.meta["return"],tx.value,"You seem to have underpaid.")
+                        refund(meta.meta["return"],tx.value,custom.REFUNDS.underpay)
                       else
                         if refundAmt > 0 then
-                          refund(meta.meta["return"],refundAmt,"Here is your change.")
+                          refund(meta.meta["return"],refundAmt,custom.REFUNDS.change)
                           logger.info("Sent refund of "..refundAmt.." due to overpay.")
                         end
                       end
                     else
-                      refund(meta.meta["return"],tx.value,"We seem to have run out of that item!")
+                      refund(meta.meta["return"],tx.value,custom.REFUNDS.outOfStock)
                       logger.warn("Sent refund of "..tx.value.." due to not having the item selected.")
                     end
                 else
                     if tx.to == pubKey then
                         logger.warn("No item selected, but we were payed!  Returning...")
                         if meta.meta["return"] then
-                            refund(meta.meta["return"],tx.value,"There is no item selected.")
+                            refund(meta.meta["return"],tx.value,custom.REFUNDS.noItemSelected)
 
                         end
                     end
