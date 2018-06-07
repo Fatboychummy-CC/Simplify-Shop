@@ -3,6 +3,10 @@ Kristshop which only requires one krist address, without a domain.
 
 ### (This tutorial and the shop itself assumes you are running this on **SwitchCraft**)
 
+## Updating the shop
+The shop has a built in auto-updater (as of v1.0), which is run each time upon startup.  If it detects an update you may choose to update it, or not (By pressing 'Y' for yes, or 'N' for no).
+The updater will wait 30 seconds for a response, and if there is none, will skip the update.  This is to prevent the shop from getting "stuck" at startup.
+
 ## Using the shop
 The shop requires 4 things from you to run.
 1. Your **KRISTWALLET** password.
