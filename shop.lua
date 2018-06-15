@@ -1,9 +1,9 @@
 --[[
-1.05
+1.07
 noRequire
-Added custom refund messages, and fixed a part of checkCustomization.  Added function fixCustomization for updates.
+Edited the customizationFile Error Repair to include be more compact.  Added the ability to use a single chest. (The customizationFile has changed to reflect this)
 ]]
-local version = 1.05
+local version = 1.07
 
 --[[
     SIMPLIFY Shop
@@ -12,11 +12,7 @@ made by fatmanchummy
 ]]
 
 
---[[ToDo:
-Helpfile
-Refund stuff
-Single chest rather than modem chests
-]]
+
 
 
 if not fs.exists("w.lua") then
@@ -45,11 +41,20 @@ if true then
   local v = tonumber(handle.readLine())
   local noRequire = handle.readLine()
   local notes = handle.readLine()
-  print(v<version and v.." < "..version or v.." > "..version)
+  if v < version then
+    print(v,"<",version)
+  elseif v == version then
+    print(v,"=",version)
+  else
+    print(v,">",version)
+  end
   handle.close()
   if v > version then
     print("There is an update available.")
-    print("Update notes: "..notes)
+    print("Update notes: ")
+    print("--------------------------------")
+    print(notes)
+    print("--------------------------------")
     print("Would you like to do the update now? (Y/N)")
     local utm = os.startTimer(30)
     local yes = false
@@ -126,6 +131,7 @@ local ws
 local buttons = {}
 local recentPress = false
 local rPressTimer = "nothing to see yet"
+local cobCount = 0
 
 if fs.exists(".turtle") then
     local hd = fs.open(".turtle","r")
@@ -256,19 +262,6 @@ local function writeCustomization(name)
         hd.writeLine(txt)
     end
     ao("data = {")
-    ao("  REFUNDS = {")
-    ao("    noItemSelected = \"There is no item selected!\",")
-    ao("    underpay = \"You seem to have underpaid.\",")
-    ao("    change = \"You overpaid by a small amount, here's your change!\",")
-    ao("    badAddress = \"Use /pay, do not transfer directly from another address!\",")
-    ao("    outOfStock = \"We do not have any stock of that item!\",")
-    ao("  },")
-    ao("  LOGGER = {")
-    ao("    doInfoLogging = false,")
-    ao("    doWarnLogging = true,")
-    ao("    LOG_LOCATION = \"logs/\",")
-    ao("    LOG_NAME = \"Log\",")
-    ao("  },")
     ao("  owner = \"nobody\",")
     ao("  shopName = \"Unnamed Shop\",")
     ao("  showCustomInfo = true,")
@@ -286,6 +279,9 @@ local function writeCustomization(name)
     ao("  touchHereForCobbleButton = true,")
     ao("  dropSide = \"top\", -- the side the turtle will drop from, accepts 'top', 'bottom', and 'front'")
     ao("  itemsDrawnAtOnce = 7,")
+    ao("  useBothChestTypes = false,")
+    ao("  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
+    ao("  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
     ao("  farthestBackground = {")
     ao("    bg = colors.black,")
     ao("  },")
@@ -333,6 +329,19 @@ local function writeCustomization(name)
     ao("    bg = colors.black,")
     ao("    fg = colors.white,")
     ao("  },")
+    ao("  REFUNDS = {")
+    ao("    noItemSelected = \"There is no item selected!\",")
+    ao("    underpay = \"You seem to have underpaid.\",")
+    ao("    change = \"You overpaid by a small amount, here's your change!\",")
+    ao("    badAddress = \"Use /pay, do not transfer directly from another address!\",")
+    ao("    outOfStock = \"We do not have any stock of that item!\",")
+    ao("  },")
+    ao("  LOGGER = {")
+    ao("    doInfoLogging = false,")
+    ao("    doWarnLogging = true,")
+    ao("    LOG_LOCATION = \"logs/\",")
+    ao("    LOG_NAME = \"Log\",")
+    ao("  },")
     ao("}")
     ao("return data")
     hd.close()
@@ -341,10 +350,14 @@ end
 --THIS FUNCTION WILL CONTINUALLY CHANGE DEPENDING ON THE VERSION
 function fixCustomization(key)
   logger.info("Attempting to fix "..key)
-  if key == "REFUNDS" then
-    local hand = fs.open(fatCustomization,"r")
-    local lines = {}
-    local i = 1
+  local hand = "h"
+  local lines = {}
+  local i = 1
+  local function ao(a)
+    hand.writeLine(a)
+  end
+  if key == "REFUNDS" or key == "useSingleChest" or key == "useBothChestTypes" or key == "chestSide" then
+    hand = fs.open(fatCustomization,"r")
     repeat
       local line = hand.readLine()
       lines[i] = line
@@ -353,10 +366,9 @@ function fixCustomization(key)
     hand.close()
     fs.delete(fatCustomization)
     hand = fs.open(fatCustomization,"w")
-    local function ao(a)
-      hand.writeLine(a)
-    end
     ao(lines[1])
+  end
+  if key == "REFUNDS" then
     ao("  REFUNDS = {")
     ao("    noItemSelected = \"There is no item selected!\",")
     ao("    underpay = \"You seem to have underpaid.\",")
@@ -364,6 +376,33 @@ function fixCustomization(key)
     ao("    badAddress = \"Use /pay, do not transfer directly from another address!\",")
     ao("    outOfStock = \"We do not have any stock of that item!\",")
     ao("  },")
+    for i = 2,#lines do
+      ao(lines[i])
+    end
+    hand.close()
+    logger.info("Potential fix complete.  Rebooting")
+    os.sleep(2)
+    os.reboot()
+  elseif key == "useSingleChest" then
+    ao("  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
+    for i = 2,#lines do
+      ao(lines[i])
+    end
+    hand.close()
+    logger.info("Potential fix complete.  Rebooting")
+    os.sleep(2)
+    os.reboot()
+  elseif key == "chestSide" then
+    ao("  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
+    for i = 2,#lines do
+      ao(lines[i])
+    end
+    hand.close()
+    logger.info("Potential fix complete.  Rebooting")
+    os.sleep(2)
+    os.reboot()
+  elseif key == "useBothChestTypes" then
+    ao("  useBothChestTypes = false,")
     for i = 2,#lines do
       ao(lines[i])
     end
@@ -454,11 +493,16 @@ end
 
 function refreshChests()
     chests = {}
-    local allPs = peripheral.getNames()
-    for i = 1,#allPs do
-        if allPs[i]:find("chest") then
-            table.insert(chests,allPs[i])
-        end
+    if not custom.useSingleChest or custom.useBothChestTypes then
+      local allPs = peripheral.getNames()
+      for i = 1,#allPs do
+          if allPs[i]:find("chest") then
+              table.insert(chests,allPs[i])
+          end
+      end
+    end
+    if custom.useSingleChest or custom.useBothChestTypes then
+      table.insert(chests,custom.chestSide)
     end
 end
 
@@ -490,6 +534,7 @@ function refreshItems()
     for i = 1,#sIL do
         sIL[i].count = 0
     end
+    cobCount = 0
     for i = 1,#chests do
         local cChest = peripheral.wrap(chests[i])
         local cInv = cChest.list()
@@ -500,9 +545,15 @@ function refreshItems()
                         sIL[p].count = sIL[p].count + cInv[o].count
                     end
                 end
+                if custom.touchHereForCobbleButton and cInv[o].name == "minecraft:cobblestone" and cInv[o].damage == 0 then
+                  cobCount = cobCount + cInv[o].count
+                end
             end
         end
     end
+    buttons.cobble.content = "Free Cobble ("..cobCount..")"
+    local b = buttons.cobble.content
+    buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
 end
 
 function grabItems(name,dmg,count)
@@ -721,7 +772,7 @@ buttons = {
       y1 = mY-7,
       x2 = 41,
       y2 = mY-5,
-      content = "Free Cobble",
+      content = "Free Cobble (UNKNOWN)",
       enabled = false,
     },
     pgUp = {
@@ -780,6 +831,8 @@ jua.on("timer",function(evt,tmr)
     recentPress = false
     logger.info("30 second timer expired.")
     selection = false
+    refreshItems()
+    draw()
   end
 end)
 
