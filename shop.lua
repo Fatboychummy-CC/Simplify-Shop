@@ -1,9 +1,9 @@
 --[[
-1.071
+1.08
 noRequire
-This is less of an update, and more of a warning.  In the last update (1.0.7) I added the ability to use single chests.  I did not realize pushItems was broken however, and causes a freeze when used.  DO NOT USE SINGLE CHEST MODE UNTIL IT IS FIXED.
+Fixed the problem with single chests.  Single chests which are not connected to a modem drop directly from the chest.  All other chest types will drop from the turtle.
 ]]
-local version = 1.071
+local version = 1.08
 
 --[[
     SIMPLIFY Shop
@@ -556,6 +556,7 @@ function refreshItems()
     buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
 end
 
+
 function grabItems(name,dmg,count)
   refreshChests()
   local amountTransfered = 0
@@ -567,7 +568,15 @@ function grabItems(name,dmg,count)
       for o = 1,sz do
         if cur[o] and cur[o].name == name and cur[o].damage == dmg then
           if count-amountTransfered > 0 then
-            amountTransfered = amountTransfered + cChest.pushItems(tName,o,count-amountTransfered)
+            if ( custom.useBothChestTypes or custom.useSingleChest ) and chests[i] == custom.chestSide then
+              if custom.chestSide == "front" or custom.chestSide == "bottom" or custom.chestSide == "top" or custom.chestSide == "left" or custom.chestSide == "right" or custom.chestSide == "back" then
+                amountTransfered = amountTransfered + cChest.drop(o,count-amountTransfered)
+              else
+                amountTransfered = amountTransfered + cChest.pushItems(tName,o,count-amountTransfered)
+              end
+            else
+              amountTransfered = amountTransfered + cChest.pushItems(tName,o,count-amountTransfered)
+            end
           end
           if custom.dropSide == "top" then
             turtle.dropUp()
@@ -579,12 +588,12 @@ function grabItems(name,dmg,count)
             logger.severe("dropSide not configured correctly, dropping from the front.")
             turtle.drop()
           end
-          if amountTransfered == count then
-            break
+          if amountTransfered >= count then
+            return amountTransfered
           end
         end
-        if amountTransfered == count then
-          break
+        if amountTransfered >= count then
+          return amountTransfered
         end
       end
     end
