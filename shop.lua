@@ -1,9 +1,9 @@
 --[[
-1.08
+1.081
 noRequire
-Fixed the problem with single chests.  Single chests which are not connected to a modem drop directly from the chest.  All other chest types will drop from the turtle.
+Tiny update to fix duplicate chests appearing in the chests table
 ]]
-local version = 1.08
+
 
 --[[
     SIMPLIFY Shop
@@ -11,7 +11,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-
+local version = 1.081
 
 
 
@@ -502,7 +502,15 @@ function refreshChests()
       end
     end
     if custom.useSingleChest or custom.useBothChestTypes then
-      table.insert(chests,custom.chestSide)
+      local yay = true
+      for i = 1,#chests do
+        if chests[i] == custom.chestSide then
+          yay = false
+        end
+      end
+      if yay then
+        table.insert(chests,custom.chestSide)
+      end
     end
 end
 
