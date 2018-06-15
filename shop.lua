@@ -1,9 +1,9 @@
 --[[
-1.07
+1.071
 noRequire
-Edited the customizationFile Error Repair to be more compact.  Added the ability to use a single chest. (The customizationFile has changed to reflect this)
+This is less of an update, and more of a warning.  In the last update (1.0.7) I added the ability to use single chests.  I did not realize pushItems was broken however, and causes a freeze when used.  DO NOT USE SINGLE CHEST MODE UNTIL IT IS FIXED.
 ]]
-local version = 1.07
+local version = 1.071
 
 --[[
     SIMPLIFY Shop
