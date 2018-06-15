@@ -1,7 +1,7 @@
 --[[
 1.07
 noRequire
-Edited the customizationFile Error Repair to include be more compact.  Added the ability to use a single chest. (The customizationFile has changed to reflect this)
+Edited the customizationFile Error Repair to be more compact.  Added the ability to use a single chest. (The customizationFile has changed to reflect this)
 ]]
 local version = 1.07
 
