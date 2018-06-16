@@ -711,7 +711,7 @@ function refreshItems()
     for i = 1,#chests do
         local cChest = peripheral.wrap(chests[i])
         if type(cChest) ~= "table" then
-          logger.severe("Chest \""..tostring(chests[i]).."\" (Index "..tostring(i)..") is seemingly missing from the network! Skipping it.")
+          logger.warn("Chest \""..tostring(chests[i]).."\" (Index "..tostring(i)..") is seemingly missing from the network! Skipping it.")
         else
           local cInv = cChest.list()
           for o = 1,cChest.size() do
@@ -762,7 +762,7 @@ function grabItems(name,dmg,count)
           elseif custom.dropSide == "front" then
             turtle.drop()
           else
-            logger.severe("dropSide not configured correctly, dropping from the front.")
+            logger.warn("dropSide not configured correctly, dropping from the front.")
             turtle.drop()
           end
           if amountTransfered >= count then
@@ -1066,7 +1066,7 @@ jua.on("terminate",function()
   if ws then ws.close() end
   jua.stop()
   bsod("Terminated")
-  logger.severe("Ah fuck we've been terminated")
+  logger.severe("Why would you terminate me like this?")
   if logger.canLogBeOpened then
     logger.closeLog()
   end
@@ -1111,16 +1111,16 @@ jua.go(function()
                       else
                         if refundAmt > 0 then
                           refund(meta.meta["return"],refundAmt,custom.REFUNDS.change)
-                          logger.info("Sent refund of "..refundAmt.." due to overpay.")
+                          logger.purchase("Sent refund of "..refundAmt.." due to overpay.")
                         end
                       end
                     else
                       refund(meta.meta["return"],tx.value,custom.REFUNDS.outOfStock)
-                      logger.warn("Sent refund of "..tx.value.." due to not having the item selected.")
+                      logger.purchase("Sent refund of "..tx.value.." due to not having the item selected.")
                     end
                 else
                     if tx.to == pubKey then
-                        logger.warn("No item selected, but we were payed!  Returning...")
+                        logger.purchase("No item selected, but we were payed!  Returning...")
                         if meta.meta["return"] then
                             refund(meta.meta["return"],tx.value,custom.REFUNDS.noItemSelected)
 
