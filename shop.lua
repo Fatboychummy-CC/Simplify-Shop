@@ -1,7 +1,7 @@
 --[[
-1.1
+1.101
 require
-Rewrote fixCustomization to allow for better handling of errors.  Updated the logger so that purchases are logged seperately from normal logs.
+Minor bug fix for purchase logging, requires a fixed logger (downloaded upon update)
 ]]
 
 
@@ -11,7 +11,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 1.1
+local version = 1.101
 
 
 
