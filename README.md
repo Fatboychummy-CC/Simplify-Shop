@@ -131,6 +131,9 @@ Sample purchase log:
 [INFO] Sent refund of 1 due to overpay.
 ```
 **minecraft:diamond** -- The item that was sold
+
 **:0** -- The damage value of the item
+
 **[2]** -- The amount sold
+
 **for 6** -- How much it costed.
