@@ -76,19 +76,19 @@ This should only be enabled if you want to see WHERE an error is occuring, or if
 Enabling doInfoLogging will spam your log files so full of crap that your computer will probably overflow in 2 hours.
 Sample info logs:
 ```
-[INFO] Connected to websocket
-[INFO] MOTD: Welcome to Krist! Lemmmy is Yemmel
-[INFO] Subscribed to transactions
-[INFO] Redraw
-[INFO] Redraw
-[INFO] Redraw
-[INFO] Redraw
-[INFO] Redraw
-[INFO] Redraw
-[INFO] Redraw
-[INFO] Redraw
-[INFO] Redraw
-[INFO] Redraw
+[INFO]: Connected to websocket
+[INFO]: MOTD: Welcome to Krist! Lemmmy is Yemmel
+[INFO]: Subscribed to transactions
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
 ```
 
 #### Warn
@@ -96,11 +96,11 @@ Warns are a step above Infos.  They mean "Something bad happened, but we can ski
 
 Sample warn logs:
 ```
-[INFO] Connected to websocket
-[INFO] MOTD: Welcome to Krist! Lemmmy is Yemmel
-[INFO] Subscribed to transactions
-[INFO] Redraw
-[WARN] Chest "LolNotAChest" seemingly is not connected to the network! Skipping it.
+[INFO]: Connected to websocket
+[INFO]: MOTD: Welcome to Krist! Lemmmy is Yemmel
+[INFO]: Subscribed to transactions
+[INFO]: Redraw
+[WARN]: Chest "LolNotAChest" seemingly is not connected to the network! Skipping it.
 ```
 
 #### Severe
@@ -109,12 +109,12 @@ Severe is error.  When something needs to be fixed (such as the customization fi
 Sample severe logs:
 
 ```
-[INFO] Connected to monitor monitor_bla
-[INFO] Items found in data: 16
-[INFO] Checking customization file
-[SEVERE] useBothChestTypes: expected boolean, got nil
-[INFO] Attempting to fix customization file
-[INFO] Potential fix for customization file. Rebooting.
+[INFO]: Connected to monitor monitor_bla
+[INFO]: Items found in data: 16
+[INFO]: Checking customization file
+[SEVERE]: useBothChestTypes: expected boolean, got nil
+[INFO]: Attempting to fix customization file
+[INFO]: Potential fix for customization file. Rebooting.
 ```
 Terminating the program also causes severes.
 
@@ -128,7 +128,8 @@ Sample purchase log:
 [INFO]: Payment to: kxxxxxxxxx (we are kxxxxxxxxx)
 [INFO]: Payment being processed.
 [PURCHASE]: minecraft:diamond:0[2] for 6.
-[INFO] Sent refund of 1 due to overpay.
+[INFO]: Sent refund
+[PURCHASE]: Sent refund of 1 due to overpay.
 ```
 **minecraft:diamond** -- The item that was sold
 
