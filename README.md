@@ -65,3 +65,76 @@ To select an item, simply right-click on one of the items on the monitor.  Depen
 /pay KRISTADDRESS AMOUNT
 ```
 
+## Logging
+
+The shop has a logger which it uses to locally store logs.  You can choose what types of data to log, and where.
+
+### Types:
+
+#### Info
+This should only be enabled if you want to see WHERE an error is occuring, or if you are absolutely crazy.
+Enabling doInfoLogging will spam your log files so full of crap that your computer will probably overflow in 2 hours.
+Sample info logs:
+```
+[INFO]: Connected to websocket
+[INFO]: MOTD: Welcome to Krist! Lemmmy is Yemmel
+[INFO]: Subscribed to transactions
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+[INFO]: Redraw
+```
+
+#### Warn
+Warns are a step above Infos.  They mean "Something bad happened, but we can skip over it".
+
+Sample warn logs:
+```
+[INFO]: Connected to websocket
+[INFO]: MOTD: Welcome to Krist! Lemmmy is Yemmel
+[INFO]: Subscribed to transactions
+[INFO]: Redraw
+[WARN]: Chest "LolNotAChest" seemingly is not connected to the network! Skipping it.
+```
+
+#### Severe
+Severe is error.  When something needs to be fixed (such as the customization file being incorrect), you will get a severe notification.
+
+Sample severe logs:
+
+```
+[INFO]: Connected to monitor monitor_bla
+[INFO]: Items found in data: 16
+[INFO]: Checking customization file
+[SEVERE]: useBothChestTypes: expected boolean, got nil
+[INFO]: Attempting to fix customization file
+[INFO]: Potential fix for customization file. Rebooting.
+```
+Terminating the program also causes severes.
+
+#### Purchase
+What do you think this is?
+Whenever someone purchases something from the shop, it generates a "purchase" log.
+
+Sample purchase log:
+
+```
+[INFO]: Payment to: kxxxxxxxxx (we are kxxxxxxxxx)
+[INFO]: Payment being processed.
+[PURCHASE]: minecraft:diamond:0[2] for 6.
+[INFO]: Sent refund
+[PURCHASE]: Sent refund of 1 due to overpay.
+```
+**minecraft:diamond** -- The item that was sold
+
+**:0** -- The damage value of the item
+
+**[2]** -- The amount sold
+
+**for 6** -- How much it costed.
