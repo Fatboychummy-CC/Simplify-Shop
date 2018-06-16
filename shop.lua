@@ -1,7 +1,7 @@
 --[[
-1.081
-noRequire
-Tiny update to fix duplicate chests appearing in the chests table
+1.1
+require
+Rewrote fixCustomization to allow for better handling of errors.  Updated the logger so that purchases are logged seperately from normal logs.
 ]]
 
 
@@ -11,7 +11,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 1.081
+local version = 1.1
 
 
 
@@ -107,8 +107,11 @@ k.init(jua,json,w,r)
 ---------------------------------------------------
 os.unloadAPI("logger.lua")
 os.loadAPI("logger.lua")
-if _G.canLogBeOpened then
+if logger.canLogBeOpened then
   logger.openLog()
+end
+if logger.canPurchaseLogBeOpened then
+  logger.openPurchaseLog()
 end
 ----------
 local fatData = "fatItemData"
@@ -337,10 +340,14 @@ local function writeCustomization(name)
     ao("    outOfStock = \"We do not have any stock of that item!\",")
     ao("  },")
     ao("  LOGGER = {")
-    ao("    doInfoLogging = false,")
+    ao("    doNormalLogging = false, --If you are getting errors, set this to true.  It tends to spam files.")
+    ao("    doPurchaseLogging = true,")
+    ao("    doInfoLogging = false, --HIGHLY recommended to not enable this.  Every time the screen redraws an info event is created.")
     ao("    doWarnLogging = true,")
     ao("    LOG_LOCATION = \"logs/\",")
     ao("    LOG_NAME = \"Log\",")
+    ao("    PURCHASE_LOG_LOCATION = \"purchases/\",")
+    ao("    PURCHASE_LOG_NAME = \"PurchaseLog\",")
     ao("  },")
     ao("}")
     ao("return data")
@@ -349,69 +356,224 @@ end
 
 --THIS FUNCTION WILL CONTINUALLY CHANGE DEPENDING ON THE VERSION
 function fixCustomization(key)
-  logger.info("Attempting to fix "..key)
+  logger.info("Attempting to fix customization file.")
   local hand = "h"
-  local lines = {}
-  local i = 1
   local function ao(a)
     hand.writeLine(a)
+    hand.flush()
   end
-  if key == "REFUNDS" or key == "useSingleChest" or key == "useBothChestTypes" or key == "chestSide" then
-    hand = fs.open(fatCustomization,"r")
-    repeat
-      local line = hand.readLine()
-      lines[i] = line
-      i = i + 1
-    until not line
-    hand.close()
-    fs.delete(fatCustomization)
-    hand = fs.open(fatCustomization,"w")
-    ao(lines[1])
+  local function chk(a)
+    return type(a) == "table"
   end
-  if key == "REFUNDS" then
-    ao("  REFUNDS = {")
-    ao("    noItemSelected = \"There is no item selected!\",")
-    ao("    underpay = \"You seem to have underpaid.\",")
-    ao("    change = \"You overpaid by a small amount, here's your change!\",")
-    ao("    badAddress = \"Use /pay, do not transfer directly from another address!\",")
-    ao("    outOfStock = \"We do not have any stock of that item!\",")
+  local clr = {
+    [1] = "colors.white",
+    [2] = "colors.orange",
+    [4] = "colors.magenta",
+    [8] = "colors.lightBlue",
+    [16] = "colors.yellow",
+    [32] = "colors.lime",
+    [64] = "colors.pink",
+    [128] = "colors.gray",
+    [256] = "colors.lightGray",
+    [512] = "colors.cyan",
+    [1024] = "colors.purple",
+    [2048] = "colors.blue",
+    [4096] = "colors.brown",
+    [8192] = "colors.green",
+    [16384] = "colors.red",
+    [32768] = "colors.black",
+  }
+  hand = fs.open(fatCustomization,"w")
+
+  if chk(custom) then
+    ao("data = {")
+    ao(custom.owner and "  owner = \""..custom.owner.."\"," or "  owner = \"Nobody\",")
+    ao(custom.shopName and "  shopName = \""..custom.shopName.."\"," or  "  shopName = \"Unnamed Shop\",")
+    ao(type(custom.showCustomInfo) == "boolean" and "  showCustomInfo = "..tostring(custom.showCustomInfo).."," or "  showCustomInfo = true,")
+      ao("  customInfo = {")
+    if chk(custom.customInfo) then
+      ao((custom.customInfo and custom.customInfo[1]) and "    [ 1 ] = \"" .. custom.customInfo[1] .. "\"," or "    [ 1 ] = \"Edit customInfo variable to change me\",")
+      ao((custom.customInfo and custom.customInfo[2]) and "    [ 2 ] = \"" .. custom.customInfo[2] .. "\"," or "    [ 2 ] = \"Up to two lines are permitted\",")
+    else
+      ao("    [ 1 ] = \"Edit customInfo variable to change me\",")
+      ao("    [ 2 ] = \"Up to two lines are permitted\",")
+    end
     ao("  },")
-    for i = 2,#lines do
-      ao(lines[i])
+    ao(type(custom.showCustomBigInfo) == "boolean" and "  showCustomBigInfo = "..tostring(custom.showCustomBigInfo).."," or "  showCustomBigInfo = false,")
+    ao("  customBigInfo = {")
+    if chk(custom.customBigInfo) then
+      ao((custom.customBigInfo and custom.customBigInfo[1]) and "    [ 1 ] = \""..custom.customBigInfo[1].."\"," or "    [ 1 ] = \"Edit customBigInfo variable to change me\",")
+      ao((custom.customBigInfo and custom.customBigInfo[2]) and "    [ 2 ] = \""..custom.customBigInfo[2].."\"," or "    [ 2 ] = \"the word PUBKEY will be translated\",")
+      ao((custom.customBigInfo and custom.customBigInfo[3]) and "    [ 3 ] = \""..custom.customBigInfo[3].."\"," or "    [ 3 ] = \"to your public krist address.\",")
+      ao((custom.customBigInfo and custom.customBigInfo[4]) and "    [ 4 ] = \""..custom.customBigInfo[4].."\"," or "    [ 4 ] = \"Up to four lines are permitted\",")
+    else
+      ao("    [ 1 ] = \"Edit customBigInfo variable to change me\",")
+      ao("    [ 2 ] = \"the word PUBKEY will be translated\",")
+      ao("    [ 3 ] = \"to your public krist address.\",")
+      ao("    [ 4 ] = \"Up to four lines are permitted\",")
     end
-    hand.close()
-    logger.info("Potential fix complete.  Rebooting")
-    os.sleep(2)
-    os.reboot()
-  elseif key == "useSingleChest" then
-    ao("  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
-    for i = 2,#lines do
-      ao(lines[i])
+    ao("  },")
+    ao(type(custom.touchHereForCobbleButton) == "boolean" and "  touchHereForCobbleButton = "..tostring(custom.touchHereForCobbleButton).."," or "  touchHereForCobbleButton = true,")
+    ao(custom.dropSide and "  dropSide = \""..custom.dropSide.."\", -- the side the turtle will drop from, accepts 'top', 'bottom', and 'front'" or "  dropSide = \"unset\", -- the side the turtle will drop from, accepts 'top', 'bottom', and 'front'")
+    ao(custom.itemsDrawnAtOnce and "  itemsDrawnAtOnce = "..tostring(custom.itemsDrawnAtOnce).."," or "  itemsDrawnAtOnce = 7,")
+    ao(type(custom.useBothChestTypes) == "boolean" and "  useBothChestTypes = "..tostring(custom.useBothChestTypes).."," or "  useBothChestTypes = false,")
+    ao(type(custom.useSingleChest) == "boolean" and "  useSingleChest = "..tostring(custom.useSingleChest)..", --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest." or "  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
+    ao(custom.chestSide and " chestSide = \""..custom.chestSide.."\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")" or "  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
+    ao("  farthestBackground = {")
+    if chk(custom.farthestBackground) then
+      ao(custom.farthestBackground.bg and "    bg = "..clr[custom.farthestBackground.bg].."," or "    bg = colors.black,")
+    else
+      ao("    bg = colors.black,")
     end
-    hand.close()
-    logger.info("Potential fix complete.  Rebooting")
-    os.sleep(2)
-    os.reboot()
-  elseif key == "chestSide" then
-    ao("  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
-    for i = 2,#lines do
-      ao(lines[i])
+    ao("  },")
+    ao("  background = {")
+    if chk(custom.background) then
+      ao(custom.background.bg and "    bg = "..clr[custom.background.bg].."," or "    bg = colors.gray,")
+      ao(custom.background.fg and "    fg = "..clr[custom.background.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.gray,")
+      ao("    fg = colors.white,")
     end
-    hand.close()
-    logger.info("Potential fix complete.  Rebooting")
-    os.sleep(2)
-    os.reboot()
-  elseif key == "useBothChestTypes" then
-    ao("  useBothChestTypes = false,")
-    for i = 2,#lines do
-      ao(lines[i])
+    ao("  },")
+    ao("  nameBar = {")
+    if chk(custom.nameBar) then
+      ao(custom.nameBar.bg  and "    bg = "..clr[custom.nameBar.bg].."," or "    bg = colors.purple,")
+      ao(custom.nameBar.fg  and "    fg = "..clr[custom.nameBar.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.purple,")
+      ao("    fg = colors.white,")
     end
-    hand.close()
-    logger.info("Potential fix complete.  Rebooting")
-    os.sleep(2)
+    ao("  },")
+    ao("  itemInfoBar = {")
+    if chk(custom.itemInfoBar) then
+      ao(custom.itemInfoBar.bg  and "    bg = "..clr[custom.itemInfoBar.bg].."," or "    bg = colors.blue,")
+      ao(custom.itemInfoBar.fg  and "    fg = "..clr[custom.itemInfoBar.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.blue,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  infoBar = {")
+    if chk(custom.infoBar) then
+      ao(custom.infoBar.bg  and "    bg = "..clr[custom.infoBar.bg].."," or "    bg = colors.purple,")
+      ao(custom.infoBar.fg  and "    fg = "..clr[custom.infoBar.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.purple,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  buttons = {")
+    if chk(custom.buttons) then
+      ao(custom.buttons.bg  and "    bg = "..clr[custom.buttons.bg].."," or "    bg = colors.blue,")
+      ao(custom.buttons.fg  and "    fg = "..clr[custom.buttons.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.blue,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  disabledButtons = {")
+    if chk(custom.disabledButtons) then
+      ao(custom.disabledButtons.bg  and "    bg = "..clr[custom.disabledButtons.bg].."," or "    bg = colors.lightGray,")
+      ao(custom.disabledButtons.fg  and "    fg = "..clr[custom.disabledButtons.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.lightGray,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  selection = {")
+    if chk(custom.selection) then
+      ao(custom.selection.bg  and "    bg = "..clr[custom.selection.bg].."," or "    bg = colors.white,")
+      ao(custom.selection.fg  and "    fg = "..clr[custom.selection.fg].."," or "    fg = colors.black,")
+    else
+      ao("    bg = colors.white,")
+      ao("    fg = colors.black,")
+    end
+    ao("  },")
+    ao("  bigSelection = {")
+    if chk(custom.bigSelection) then
+      ao(custom.bigSelection.bg  and "    bg = "..clr[custom.bigSelection.bg].."," or "    bg = colors.black,")
+      ao(custom.bigSelection.bg  and "    fg = "..clr[custom.bigSelection.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.black,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  bigInfo = {")
+    if chk(custom.bigInfo) then
+      ao(custom.bigInfo.bg  and "    bg = "..clr[custom.bigInfo.bg].."," or "    bg = colors.black,")
+      ao(custom.bigInfo.fg  and "    fg = "..clr[custom.bigInfo.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.black,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  itemTableColor1 = {")
+    if chk(custom.itemTableColor1) then
+      ao(custom.itemTableColor1.bg  and "    bg = "..clr[custom.itemTableColor1.bg].."," or "    bg = colors.black,")
+      ao(custom.itemTableColor1.bg  and "    fg = "..clr[custom.itemTableColor1.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.black,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  itemTableColor2 = {")
+    if chk(custom.itemTableColor2) then
+      ao(custom.itemTableColor2.bg  and "    bg = "..clr[custom.itemTableColor2.bg].."," or "    bg = colors.black,")
+      ao(custom.itemTableColor2.fg  and "    fg = "..clr[custom.itemTableColor2.fg].."," or "    fg = colors.white,")
+    else
+      ao("    bg = colors.black,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  REFUNDS = {")
+    if chk(custom.REFUNDS) then
+      ao(custom.REFUNDS.noItemSelected and "    noItemSelected = \""..custom.REFUNDS.noItemSelected.."\"," or "    noItemSelected = \"There is no item selected!\",")
+      ao(custom.REFUNDS.underpay and "    underpay = \""..custom.REFUNDS.underpay .."\"," or "    underpay = \"You seem to have underpaid.\",")
+      ao(custom.REFUNDS.change and "    change = \""..custom.REFUNDS.change .."\"," or "    change = \"You overpaid by a small amount, here's your change!\",")
+      ao(custom.REFUNDS.badAddress and "    badAddress = \""..custom.REFUNDS.badAddress .."\"," or "    badAddress = \"Use /pay, do not transfer directly from another address!\",")
+      ao(custom.REFUNDS.outOfStock and "    outOfStock = \""..custom.REFUNDS.outOfStock .."\"," or "    outOfStock = \"We do not have any stock of that item!\",")
+    else
+      ao("    noItemSelected = \"There is no item selected!\",")
+      ao("    underpay = \"You seem to have underpaid.\",")
+      ao("    change = \"You overpaid by a small amount, here's your change.\",")
+      ao("    badAddress = \"Use /pay, do not transfer directly from another address.\",")
+      ao("    outOfStock = \"We do not have any stock of that item!\",")
+    end
+    ao("  },")
+    ao("  LOGGER = {")
+    if chk(custom.LOGGER) then
+      ao(type(custom.LOGGER.doNormalLogging) == "boolean" and "    doNormalLogging = "..tostring(custom.LOGGER.doNormalLogging)..", --If you are getting errors, set this to true.  It tends to spam files." or "    doNormalLogging = false, --If you are getting errors, set this to true.  It tends to spam files.")
+      ao(type(custom.LOGGER.doPurchaseLogging) == "boolean" and "    doPurchaseLogging = "..tostring(custom.LOGGER.doPurchaseLogging).."," or "    doPurchaseLogging = true,")
+      ao(type(custom.LOGGER.doInfoLogging) == "boolean" and "    doInfoLogging = "..tostring(custom.LOGGER.doInfoLogging)..", --HIGHLY recommended to not enable this.  Every time the screen redraws an info event is created." or "    doInfoLogging = false, --HIGHLY recommended to not enable this.  Every time the screen redraws an info event is created.")
+      ao(type(custom.LOGGER.doWarnLogging) == "boolean" and "    doWarnLogging = "..tostring(custom.LOGGER.doWarnLogging).."," or "    doWarnLogging = true,")
+      ao(custom.LOGGER.LOG_LOCATION and "    LOG_LOCATION = \""..custom.LOGGER.LOG_LOCATION.."\"," or "\"logs/\",")
+      ao(custom.LOGGER.LOG_NAME and "    LOG_NAME = \""..custom.LOGGER.LOG_NAME.."\"," or "    LOG_NAME = \"Log\",")
+      ao(custom.LOGGER.PURCHASE_LOG_LOCATION and "    PURCHASE_LOG_LOCATION = \""..custom.LOGGER.PURCHASE_LOG_LOCATION.."\"," or "    PURCHASE_LOG_LOCATION = \"purchases/\",")
+      ao(custom.LOGGER.PURCHASE_LOG_NAME and "    PURCHASE_LOG_NAME = \""..custom.LOGGER.PURCHASE_LOG_NAME.."\"," or "    PURCHASE_LOG_NAME = \"PurchaseLog\",")
+    else
+      ao("    doNormalLogging = false, --If you are getting errors, set this to true.  It tends to spam files.")
+      ao("    doPurchaseLogging = true,")
+      ao("    doInfoLogging = false, --HIGHLY recommended to not enable this.  Every time the screen redraws an info event is created.")
+      ao("    doWarnLogging = true,")
+      ao("    LOG_LOCATION = \"logs/\",")
+      ao("    LOG_NAME = \"Log\",")
+      ao("    PURCHASE_LOG_LOCATION = \"purchases/\",")
+      ao("    PURCHASE_LOG_NAME = \"PurchaseLog\",")
+    end
+    ao("  },")
+    ao("}")
+    ao("return data")
+  else
+    fs.move(fatShopCustomization,"BadShopCustomization")
+    writeCustomization(fatShopCustomization)
+    logger.severe("The fatShopCustomization file should return a table.  The old file has been moved to BadShopCustomization, and a new one has been written in it's place.")
+    logger.info("Rebooting in 10 seconds.")
+    os.sleep(10)
     os.reboot()
   end
-  logger.warn("Could not fix "..key)
+  logger.info("Potential fix for customization file. Rebooting.")
+  os.sleep(4)
+  os.reboot()
 end
 
 if not fs.exists(fatCustomization) then
@@ -428,12 +590,15 @@ function checkCustomization()
     local c2 = dofile(".temp")
     fs.delete(".temp")
     if type(custom) ~= "table" then
-        logger.severe("Customization file should return a table")
-        error()
+        fixCustomization()
     end
     local function typeWarn(k,exp)
         logger.severe(k..": expected "..exp..", got "..type(custom[k]))
-        fixCustomization(k)
+        fixCustomization()
+    end
+    local function typeInWarn(k,k2,v2)
+      logger.severe("Table "..k.."'s item '"..k2.."' should be of type "..type(v2)..", but is of type "..type(custom[k][k2]))
+      fixCustomization()
     end
     for k,v in pairs(c2) do
         if type(v) ~= type(custom[k]) then
@@ -443,7 +608,7 @@ function checkCustomization()
             for k2,v2 in pairs(v) do
                 if type(custom[k]) == "table" then
                     if type(v2) ~= type(custom[k][k2]) then
-                        logger.severe("Table "..k.."'s item '"..k2.."' should be of type "..type(v2)..", but is of type "..type(custom[k][k2]))
+                      typeInWarn(k,k2,v2)
                     end
                 end
             end
@@ -545,18 +710,22 @@ function refreshItems()
     cobCount = 0
     for i = 1,#chests do
         local cChest = peripheral.wrap(chests[i])
-        local cInv = cChest.list()
-        for o = 1,cChest.size() do
-            if cInv[o] then
-                for p = 1,#sIL do
-                    if cInv[o].name == sIL[p].find and cInv[o].damage == sIL[p].damage then
-                        sIL[p].count = sIL[p].count + cInv[o].count
-                    end
-                end
-                if custom.touchHereForCobbleButton and cInv[o].name == "minecraft:cobblestone" and cInv[o].damage == 0 then
-                  cobCount = cobCount + cInv[o].count
-                end
-            end
+        if type(cChest) ~= "table" then
+          logger.severe("Chest \""..tostring(chests[i]).."\" (Index "..tostring(i)..") is seemingly missing from the network! Skipping it.")
+        else
+          local cInv = cChest.list()
+          for o = 1,cChest.size() do
+              if cInv[o] then
+                  for p = 1,#sIL do
+                      if cInv[o].name == sIL[p].find and cInv[o].damage == sIL[p].damage then
+                          sIL[p].count = sIL[p].count + cInv[o].count
+                      end
+                  end
+                  if custom.touchHereForCobbleButton and cInv[o].name == "minecraft:cobblestone" and cInv[o].damage == 0 then
+                    cobCount = cobCount + cInv[o].count
+                  end
+              end
+          end
         end
     end
     buttons.cobble.content = "Free Cobble ("..cobCount..")"
@@ -898,8 +1067,11 @@ jua.on("terminate",function()
   jua.stop()
   bsod("Terminated")
   logger.severe("Ah fuck we've been terminated")
-  if _G.canLogBeOpened then
+  if logger.canLogBeOpened then
     logger.closeLog()
+  end
+  if logger.canPurchaseLogBeOpened then
+    logger.closePurchaseLog()
   end
   printError("I can't believe you've done this.")
 end)
