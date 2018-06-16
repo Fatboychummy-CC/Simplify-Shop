@@ -80,6 +80,23 @@ if fs.exists("fatShopCustomization") then
     end
   end
 end
+function purchase(a)
+  if term.isColor and term.isColor() then
+    local oldC = term.getTextColor()
+    term.write("[")
+    term.setTextColor(colors.green)
+    term.write("PURCHASE")
+    term.setTextColor(oldC)
+    term.write("]: ")
+  else
+    term.write("[PURCHASE]: ")
+  end
+  print(a)
+  if pFileHandle then
+    pFileHandle.writeLine(a)
+    pFileHandle.flush()
+  end
+end
 function purchaseLog(item,amount,price)
   local function err(nm,exp,tp)
     return "purchaseLog Bad argument #"..tostring(nm)..": expected "..exp..", got "..tp.."."
