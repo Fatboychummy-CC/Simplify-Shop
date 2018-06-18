@@ -11,7 +11,7 @@ made by fatmanchummy
 ]]
 
 local version = 1.2
-
+local tArgs = {...}
 
 
 if not fs.exists("w.lua") then
@@ -112,6 +112,209 @@ end
 if logger.canPurchaseLogBeOpened then
   logger.openPurchaseLog()
 end
+
+if tArgs[1] == "setup" then
+  logger.info("Entering setup.")
+  sleep(3)
+  term.clear()
+  term.setCursorPos(1,1)
+  print("Before continuing, be sure you are alone and nobody else is on/able to access this computer.")
+  print("Nothing will be hidden, and everything written to the screen during the setup will be in plaintext.")
+  print()
+  print("Press any key to continue")
+  os.pullEvent("key")
+  sleep()
+  local qa = {
+    kristAddress = {
+      q = "What is the krist address you would like to associate with this shop?",
+      a = false,
+    },
+    confirmAddress = {
+      q = "Please confirm the address by typing it again.",
+      a = false,
+    },
+    kristPword = {
+      q = "Please enter the private-key for your krist address.",
+      a = false,
+    },
+    confirmPword = {
+      q = "Please confirm the key by typing it again.",
+      a = false,
+    },
+    customInfo1 = {
+      t = "string",
+      q = "Enter line 1, leave blank for nothing.",
+      a = false,
+    },
+    customInfo2 = {
+      t = "string",
+      q = "Enter line 2, leave blank for nothing.",
+      a = false,
+    },
+
+    useSingleChest = {
+      q = "Will you be using a chest directly beside the turtle?",
+      a = false,
+    },
+    chestSide = {
+      q = "What side of the turtle is the chest on?",
+      a = false,
+    },
+    useModemChest = {
+      q = "Will you be using a storage network attached to a modem?",
+      a = false,
+    },
+  }
+  local q = {
+    owner = {
+      t = "string",
+      q = "Who owns this shop?",
+      a = false,
+    },
+    shopName = {
+      t = "string",
+      q = "What would you like this shop to be called?",
+      a = false,
+    },
+    showCustomInfo = {
+      t = "boolean",
+      q = "Would you like to use a custom information bar?",
+      a = false,
+    },
+    touchHereForCobbleButton = {
+      t = "boolean",
+      q = "Would you like to display a \"Free Cobble\" button?",
+      a = false,
+    },
+    itemsDrawnAtOnce = {
+      t = "number",
+      q = "How many items should be drawn per page?",
+      a = false,
+    },
+    dropSide = {
+      t = "string",
+      q = "What side of the turtle would you like to drop items? (front, top, or bottom)",
+      a = false,
+      list = {
+        "front",
+        "top",
+        "bottom",
+      },
+    },
+  }
+  local tries = 0
+  local function c()
+    term.clear()
+    term.setCursorPos(1,1)
+  end
+  local function pq(q)
+    print(q.q,"(" .. q.t .. ")")
+    term.write("->")
+  end
+  local function checkKristAddress(a)
+    return a:sub(1,1) == "k" and a:len() == 10;
+  end
+  repeat
+    term.clear()
+    term.setCursorPos(1,1)
+    if tries > 0 then
+      print("That is not valid. Be sure you are either: Typing an actual krist address, or Typing the same thing twice.")
+    end
+    print(qa.kristAddress.q)
+    term.write("->")
+    qa.kristAddress.a = io.read()
+    print()
+    print(qa.confirmAddress.q)
+    term.write("->")
+    qa.confirmAddress.a = io.read()
+    print()
+    tries = tries + 1
+  until qa.kristAddress.a == qa.confirmAddress.a and checkKristAddress(qa.kristAddress.a)
+  repeat
+    tries = 0
+    term.clear()
+    term.setCursorPos(1,1)
+    if tries > 0 then
+      print("Those are not the same!")
+    end
+    print(qa.kristPword.q)
+    term.write("->")
+    qa.kristPword.a = io.read()
+    print()
+    print(qa.confirmPword.q)
+    term.write("->")
+    qa.confirmPword.a = io.read()
+    print()
+    tries = tries + 1
+  until qa.kristPword.a == qa.confirmPword.a
+
+  local function customInfoRead()
+    c()
+    pq(qa.customInfo1)
+    qa.customInfo1.a = io.read()
+    print()
+    c()
+    pq(qa.customInfo2)
+    qa.customInfo2.a = io.read()
+  end
+
+  local function resolveAnswer(q,a)
+    if q.list and q.t == "string" then
+      local inList = false
+      for i = 1,#q.list do
+        if a == q.list[i] then
+          inList = true
+        end
+      end
+      return a,inList;
+    else
+      if q.t == "string" then
+        return a,true;
+      elseif q.t == "boolean" then
+        a = string.lower(a)
+        if a == "yes" or a == "true" or a == "1" or a == "y" then
+          return true,true;
+        elseif a == "no" or a == "false" or a == "0" or a == "n" then
+          return false,true;
+        else
+          return nil,false;
+        end
+      elseif q.t == "number" then
+        a = tonumber(a)
+        return a,type(a) == "number"
+      end
+    end
+  end
+
+  for k,v in pairs(q) do
+    local goodAnswer = false
+    tries = 0
+    repeat
+      local tmp = nil
+      c()
+      if tries > 0 then
+        print("That is not a valid answer.")
+      end
+      pq(v)
+      tmp = io.read()
+      local a,b = resolveAnswer(v,tmp)
+      q[k].a = a
+      if k == "showCustomInfo" and a and b then
+        customInfoRead()
+      end
+      goodAnswer = b
+      tries = tries + 1
+    until b
+  end
+
+
+
+
+  logger.info("Setup complete.")
+  error("Setup complete.")
+end
+
+
 ----------
 local fatData = "fatItemData"
 local fatCustomization = "fatShopCustomization"
@@ -363,7 +566,8 @@ local function writeCustomization(name)
 end
 
 --THIS FUNCTION WILL CONTINUALLY CHANGE DEPENDING ON THE VERSION
-local function fixCustomization(key)
+--This function will be one of the only non-local functions, due to it's requirement for setup
+function fixCustomization(key)
   logger.info("Attempting to fix customization file.")
   local hand = "h"
   local function ao(a)
