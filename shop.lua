@@ -1,5 +1,5 @@
 --[[
-1.2
+1.3
 noRequire
 Localized all functions!  The shop will run a very slight amount faster now.  Made the program more readable as well.
 ]]
@@ -10,7 +10,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 1.2
+local version = 1.3
 local tArgs = {...}
 
 
