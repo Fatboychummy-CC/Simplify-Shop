@@ -1,9 +1,8 @@
 --[[
-1.101
-require
-Minor bug fix for purchase logging, requires a fixed logger (downloaded upon update)
+1.2
+noRequire
+Localized all functions!  The shop will run a very slight amount faster now.  Made the program more readable as well.
 ]]
-
 
 --[[
     SIMPLIFY Shop
@@ -11,27 +10,27 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 1.101
+local version = 1.2
 
 
 
 if not fs.exists("w.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/w.lua/master/w.lua")
+  shell.run("wget","https://raw.githubusercontent.com/justync7/w.lua/master/w.lua")
 end
 if not fs.exists("r.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/r.lua/master/r.lua")
+  shell.run("wget","https://raw.githubusercontent.com/justync7/r.lua/master/r.lua")
 end
 if not fs.exists("k.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/k.lua/master/k.lua")
+  shell.run("wget","https://raw.githubusercontent.com/justync7/k.lua/master/k.lua")
 end
 if not fs.exists("json.lua") then
-    shell.run("pastebin","get","4nRg9CHU","json.lua")
+  shell.run("pastebin","get","4nRg9CHU","json.lua")
 end
 if not fs.exists("jua.lua") then
-    shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua")
+  shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua")
 end
 if not fs.exists("logger.lua") then
-    shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua logger.lua")
+  shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua logger.lua")
 end
 
 ------CHECK FOR UPDATES
@@ -193,7 +192,7 @@ local function writeBlankPrivKey()
     hd.writeLine("--It is recommended to use a different kristWallet than your main, as it may cause problems.")
     hd.writeLine("return false,false")
     hd.close()
-    error("Private key not valid.  Edit .privKey to change it.")
+    logger.severe("Private key not valid.  Edit .privKey to change it.  Purchases will likely not work.")
 end
 if not fs.exists(".privKey") then
     writeBlankPrivKey()
@@ -201,52 +200,61 @@ else
     privKey,pubKey = dofile(".privKey")
     if type(privKey) ~= "string" or type(pubKey) ~= "string" then
         fs.move(".privKey","badPrivateKey")
-        printError("Your old private key has been moved to \"badPrivateKey\"")
+        logger.severe("Your private key is messed up.  Your old private key has been moved to \"badPrivateKey\"")
+        logger.warn("Purchases will not work currently.  Without the private key the shop will crash!")
         writeBlankPrivKey()
     end
-    privKey = k.toKristWalletFormat(privKey)
+    if privKey then
+      privKey = k.toKristWalletFormat(privKey)
+    end
 end
 
 
+local function writeData()
+  local hd = fs.open(fatData,"w")
+  local function ao(a)
+      hd.writeLine(a)
+  end
+  ao("local items = {")
+  ao("  {")
+  ao("    display = \"Iron Ingot\",")
+  ao("    price = 1,")
+  ao("    find = \"minecraft:iron_ingot\",")
+  ao("    damage = 0,")
+  ao("  },")
+  ao("  {")
+  ao("    display = \"Coal\",")
+  ao("    price = 0.2,")
+  ao("    find = \"minecraft:coal\",")
+  ao("    damage = 0,")
+  ao("  },")
+  ao("  {")
+  ao("    display = \"Charcoal\",")
+  ao("    price = 0.1,")
+  ao("    find = \"minecraft:coal\",")
+  ao("    damage = 1,")
+  ao("  },")
+  ao("}")
+  ao("return items")
+  hd.close()
+end
 
 if not fs.exists(fatData) then
-    local hd = fs.open(fatData,"w")
-    local function ao(a)
-        hd.writeLine(a)
-    end
-    ao("local tmp = {")
-    ao("  {")
-    ao("    display = \"Iron Ingot\",")
-    ao("    price = 1,")
-    ao("    find = \"minecraft:iron_ingot\",")
-    ao("    damage = 0,")
-    ao("  },")
-    ao("  {")
-    ao("    display = \"Coal\",")
-    ao("    price = 0.2,")
-    ao("    find = \"minecraft:coal\",")
-    ao("    damage = 0,")
-    ao("  },")
-    ao("  {")
-    ao("    display = \"Charcoal\",")
-    ao("    price = 0.1,")
-    ao("    find = \"minecraft:coal\",")
-    ao("    damage = 1,")
-    ao("  },")
-    ao("}")
-    ao("return tmp")
-    --hd.write(textutils.serialise(tmp))
-    hd.close()
-    logger.warn("file "..fatData.." does not exist, wrote default item data.")
-    items = dofile(fatData)
+  writeData()
+  logger.warn("file "..fatData.." does not exist, wrote default item data.")
+  items = dofile(fatData)
 else
-    items = dofile(fatData)
+  items = dofile(fatData)
+  if type(items) ~= "table" then
+    logger.severe(fatData.." should return a table!")
+  else
     logger.info("Items found in data: "..#items)
+  end
 end
 
 
 
-function refund(to,amt,rsn)
+local function refund(to,amt,rsn)
     local success,err = await(k.makeTransaction,privKey,to,amt,rsn and "message="..rsn or "message=Unknown error occured, take your money back")
     if not success then
         logger.severe("Failed to send refund")
@@ -355,7 +363,7 @@ local function writeCustomization(name)
 end
 
 --THIS FUNCTION WILL CONTINUALLY CHANGE DEPENDING ON THE VERSION
-function fixCustomization(key)
+local function fixCustomization(key)
   logger.info("Attempting to fix customization file.")
   local hand = "h"
   local function ao(a)
@@ -418,7 +426,7 @@ function fixCustomization(key)
     ao(custom.itemsDrawnAtOnce and "  itemsDrawnAtOnce = "..tostring(custom.itemsDrawnAtOnce).."," or "  itemsDrawnAtOnce = 7,")
     ao(type(custom.useBothChestTypes) == "boolean" and "  useBothChestTypes = "..tostring(custom.useBothChestTypes).."," or "  useBothChestTypes = false,")
     ao(type(custom.useSingleChest) == "boolean" and "  useSingleChest = "..tostring(custom.useSingleChest)..", --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest." or "  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
-    ao(custom.chestSide and " chestSide = \""..custom.chestSide.."\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")" or "  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
+    ao(custom.chestSide and "  chestSide = \""..custom.chestSide.."\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")" or "  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
     ao("  farthestBackground = {")
     if chk(custom.farthestBackground) then
       ao(custom.farthestBackground.bg and "    bg = "..clr[custom.farthestBackground.bg].."," or "    bg = colors.black,")
@@ -577,93 +585,93 @@ function fixCustomization(key)
 end
 
 if not fs.exists(fatCustomization) then
-    writeCustomization(fatCustomization)
-    logger.warn("No customization file, wrote default customization file.")
-    custom = dofile(fatCustomization)
+  writeCustomization(fatCustomization)
+  logger.warn("No customization file, wrote default customization file.")
+  custom = dofile(fatCustomization)
 else
-    custom = dofile(fatCustomization)
+  custom = dofile(fatCustomization)
 end
 
-function checkCustomization()
-    logger.info("Checking Customization file")
-    writeCustomization(".temp")
-    local c2 = dofile(".temp")
-    fs.delete(".temp")
-    if type(custom) ~= "table" then
-        fixCustomization()
+local function checkCustomization()
+  logger.info("Checking Customization file")
+  writeCustomization(".temp")
+  local c2 = dofile(".temp")
+  fs.delete(".temp")
+  if type(custom) ~= "table" then
+    fixCustomization()
+  end
+  local function typeWarn(k,exp)
+    logger.severe(k..": expected "..exp..", got "..type(custom[k]))
+    fixCustomization()
+  end
+  local function typeInWarn(k,k2,v2)
+    logger.severe("Table "..k.."'s item '"..k2.."' should be of type "..type(v2)..", but is of type "..type(custom[k][k2]))
+    fixCustomization()
+  end
+  for k,v in pairs(c2) do
+    if type(v) ~= type(custom[k]) then
+      typeWarn(k,type(v))
     end
-    local function typeWarn(k,exp)
-        logger.severe(k..": expected "..exp..", got "..type(custom[k]))
-        fixCustomization()
-    end
-    local function typeInWarn(k,k2,v2)
-      logger.severe("Table "..k.."'s item '"..k2.."' should be of type "..type(v2)..", but is of type "..type(custom[k][k2]))
-      fixCustomization()
-    end
-    for k,v in pairs(c2) do
-        if type(v) ~= type(custom[k]) then
-            typeWarn(k,type(v))
+    if type(v) == "table" then
+      for k2,v2 in pairs(v) do
+        if type(custom[k]) == "table" then
+          if type(v2) ~= type(custom[k][k2]) then
+            typeInWarn(k,k2,v2)
+          end
         end
-        if type(v) == "table" then
-            for k2,v2 in pairs(v) do
-                if type(custom[k]) == "table" then
-                    if type(v2) ~= type(custom[k][k2]) then
-                      typeInWarn(k,k2,v2)
-                    end
-                end
-            end
-        end
+      end
     end
-    return true
+  end
+  return true
 end
 
-function checkData()
-    logger.info("Checking items, "..#items)
-    if type(items) ~= "table" then
-        logger.severe("Item file should return a table!")
+local function checkData()
+  logger.info("Checking items, "..#items)
+  if type(items) ~= "table" then
+    logger.severe("Item file should return a table!")
+  end
+  for i = 1,#items do
+    if type(items[i]) ~= "table" then
+      logger.severe("Each item should be a table of four keys, #"..i..": got "..type(items[i])..", expected table")
+    else
+      local c = items[i]
+      local function typeWarn(k,exp)
+        logger.severe("Item #"..i.."'s "..k..": expected "..exp..", got "..type(c[k])..".")
+      end
+      if type(c.display) ~= "string" then
+        typeWarn("display","string")
+      end
+      if type(c.price) ~= "number" then
+        typeWarn("price","number")
+      end
+      if type(c.find) ~= "string" then
+        typeWarn("find","string")
+      end
+      if type(c.damage) ~= "number" then
+        typeWarn("damage","number")
+      end
     end
-    for i = 1,#items do
-        if type(items[i]) ~= "table" then
-            logger.severe("Each item should be a table of four keys, #"..i..": got "..type(items[i])..", expected table")
-        else
-            local c = items[i]
-            local function typeWarn(k,exp)
-                logger.severe("Item #"..i.."'s "..k..": expected "..exp..", got "..type(c[k])..".")
-            end
-            if type(c.display) ~= "string" then
-                typeWarn("display","string")
-            end
-            if type(c.price) ~= "number" then
-                typeWarn("price","number")
-            end
-            if type(c.find) ~= "string" then
-                typeWarn("find","string")
-            end
-            if type(c.damage) ~= "number" then
-                typeWarn("damage","number")
-            end
-        end
-    end
-    return true
+  end
+  return true
 end
 
-function checkAllTheThings()
-    checkCustomization()
-    checkData()
+local function checkAllTheThings()
+  checkCustomization()
+  checkData()
 end
 
 
 
 --------begin inventory and monitor manip
 
-function refreshChests()
-    chests = {}
-    if not custom.useSingleChest or custom.useBothChestTypes then
-      local allPs = peripheral.getNames()
+local function refreshChests()
+  chests = {}
+  if not custom.useSingleChest or custom.useBothChestTypes then
+    local allPs = peripheral.getNames()
       for i = 1,#allPs do
-          if allPs[i]:find("chest") then
-              table.insert(chests,allPs[i])
-          end
+        if allPs[i]:find("chest") then
+          table.insert(chests,allPs[i])
+        end
       end
     end
     if custom.useSingleChest or custom.useBothChestTypes then
@@ -679,62 +687,64 @@ function refreshChests()
     end
 end
 
-function sortItems()
-    sIL = {}
-    local a = #items
-    for i = 1,a do
-        local smallestIndex = a --because why the fuck does this error if I dont
-        while items[smallestIndex] == nil do
-            smallestIndex = smallestIndex - 1
-        end
-        for o = a,1,-1 do
-            if items[o] ~= nil and items[o].display < items[smallestIndex].display then
-                smallestIndex = o
+local function refreshItems()
+  refreshChests()
+  for i = 1,#sIL do
+    sIL[i].count = 0
+  end
+  cobCount = 0
+  for i = 1,#chests do
+    local cChest = peripheral.wrap(chests[i])
+    if type(cChest) ~= "table" then
+      logger.warn("Chest \""..tostring(chests[i]).."\" (Index "..tostring(i)..") is seemingly missing from the network! Skipping it.")
+    else
+      local cInv = cChest.list()
+      for o = 1,cChest.size() do
+        if cInv[o] then
+          for p = 1,#sIL do
+            if cInv[o].name == sIL[p].find and cInv[o].damage == sIL[p].damage then
+              sIL[p].count = sIL[p].count + cInv[o].count
             end
-        end
-        if smallestIndex ~= -1 then
-            sIL[i] = {}
-            for k,v in pairs(items[smallestIndex]) do
-                sIL[i][k] = v
-            end
-            items[smallestIndex] = nil
-        end
-    end
-end
-
-function refreshItems()
-    refreshChests()
-    for i = 1,#sIL do
-        sIL[i].count = 0
-    end
-    cobCount = 0
-    for i = 1,#chests do
-        local cChest = peripheral.wrap(chests[i])
-        if type(cChest) ~= "table" then
-          logger.warn("Chest \""..tostring(chests[i]).."\" (Index "..tostring(i)..") is seemingly missing from the network! Skipping it.")
-        else
-          local cInv = cChest.list()
-          for o = 1,cChest.size() do
-              if cInv[o] then
-                  for p = 1,#sIL do
-                      if cInv[o].name == sIL[p].find and cInv[o].damage == sIL[p].damage then
-                          sIL[p].count = sIL[p].count + cInv[o].count
-                      end
-                  end
-                  if custom.touchHereForCobbleButton and cInv[o].name == "minecraft:cobblestone" and cInv[o].damage == 0 then
-                    cobCount = cobCount + cInv[o].count
-                  end
-              end
+          end
+          if custom.touchHereForCobbleButton and cInv[o].name == "minecraft:cobblestone" and cInv[o].damage == 0 then
+            cobCount = cobCount + cInv[o].count
           end
         end
+      end
     end
-    buttons.cobble.content = "Free Cobble ("..cobCount..")"
-    local b = buttons.cobble.content
-    buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
+  end
+  buttons.cobble.content = "Free Cobble ("..cobCount..")"
+  local b = buttons.cobble.content
+  buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
 end
 
 
-function grabItems(name,dmg,count)
+local function sortItems()
+  sIL = {}
+  local a = #items
+  for i = 1,a do
+    local smallestIndex = a --because why the fuck does this error if I dont
+    while items[smallestIndex] == nil do
+      smallestIndex = smallestIndex - 1
+    end
+    for o = a,1,-1 do
+      if items[o] ~= nil and items[o].display < items[smallestIndex].display then
+        smallestIndex = o
+      end
+    end
+    if smallestIndex ~= -1 then
+      sIL[i] = {}
+      for k,v in pairs(items[smallestIndex]) do
+        sIL[i][k] = v
+      end
+      items[smallestIndex] = nil
+    end
+  end
+end
+
+
+
+local function grabItems(name,dmg,count)
   refreshChests()
   local amountTransfered = 0
   if count ~= 0 then
@@ -778,12 +788,87 @@ function grabItems(name,dmg,count)
   return amountTransfered
 end
 
-function getPages()
+local function getPages()
+  if custom.itemsDrawnAtOnce == 0 then
+    mxPages = 1
+  else
     mxPages = math.ceil(#sIL/custom.itemsDrawnAtOnce)
+  end
 end
 
 --Monitor
-function drawBG()
+
+
+buttons = {
+  cobble = {
+    x1 = 29,
+    y1 = mY-7,
+    x2 = 41,
+    y2 = mY-5,
+    content = "Free Cobble (UNKNOWN)",
+    enabled = false,
+  },
+  pgUp = {
+    x1 = 17,
+    y1 = mY-7,
+    x2 = 27,
+    y2 = mY-5,
+    content = "Next Page",
+    enabled = false,
+  },
+  pgDwn = {
+    x1 = 5,
+    y1 = mY-7,
+    x2 = 15,
+    y2 = mY-5,
+    content = "Prev Page",
+    enabled = false,
+  },
+}
+local function drawButton(BUTT)
+  if BUTT.enabled then
+    mon.setBackgroundColor(custom.buttons.bg)
+    mon.setTextColor(custom.buttons.fg)
+  else
+    mon.setBackgroundColor(custom.disabledButtons.bg)
+    mon.setTextColor(custom.disabledButtons.fg)
+  end
+  local dist = BUTT.x2 - BUTT.x1+1
+  dist = string.rep(" ",dist)
+  for o = BUTT.y1,BUTT.y2 do
+    mon.setCursorPos(BUTT.x1,o)
+    mon.write(dist)
+  end
+  mon.setCursorPos(BUTT.x1+(BUTT.x2-BUTT.x1)/2-(BUTT.content:len()/2)+0.5,BUTT.y1+(BUTT.y2-BUTT.y1)/2)
+  mon.write(BUTT.content)
+end
+
+local function inBetween(x1,y1,x2,y2,x,y)
+  return x >= x1 and x <= x2 and y >= y1 and y <= y2
+end
+
+local function whichPress(x,y)
+  for k,v in pairs(buttons) do
+    if v.enabled and inBetween(v.x1,v.y1,v.x2,v.y2,x,y) then
+      return k
+    end
+  end
+  return "None"
+end
+
+local function square(x1,y1,x2,y2,c)
+  if c then
+    mon.setBackgroundColor(c)
+  end
+  local dist = x2-x1+1
+  dist = string.rep(" ",dist)
+  for i = y1,y2 do
+    mon.setCursorPos(x1,i)
+    mon.write(dist)
+  end
+end
+
+local function drawBG()
   mon.setBackgroundColor(custom.farthestBackground.bg)
   mon.clear()
   square(2,4,mX-1,mY-4,custom.background.bg)
@@ -792,225 +877,155 @@ function drawBG()
   mon.write(custom.shopName)
   square(2,mY-3,mX-1,mY,custom.infoBar.bg)
   if not custom.showCustomInfo then
-      local ln1 = "This shop was made by fatmanchummy"
-      local ln2 = "This shop is owned by "..custom.owner
-      mon.setCursorPos(mX/2-(ln1:len()/2),mY-2)
-      mon.write(ln1)
-      mon.setCursorPos(mX/2-(ln2:len()/2),mY-1)
-      mon.write(ln2)
+    local ln1 = "This shop was made by fatmanchummy"
+    local ln2 = "This shop is owned by "..custom.owner
+    mon.setCursorPos(mX/2-(ln1:len()/2),mY-2)
+    mon.write(ln1)
+    mon.setCursorPos(mX/2-(ln2:len()/2),mY-1)
+    mon.write(ln2)
   else
-      if type(custom.customInfo[1]) == "string" then
-          mon.setCursorPos(mX/2-(custom.customInfo[1]:len()/2),mY-2)
-          mon.write(custom.customInfo[1])
-          if type(custom.customInfo[2]) == "string" then
-              mon.setCursorPos(mX/2-(custom.customInfo[2]:len()/2),mY-1)
-              mon.write(custom.customInfo[2])
-          end
+    if type(custom.customInfo[1]) == "string" then
+      mon.setCursorPos(mX/2-(custom.customInfo[1]:len()/2),mY-2)
+      mon.write(custom.customInfo[1])
+      if type(custom.customInfo[2]) == "string" then
+        mon.setCursorPos(mX/2-(custom.customInfo[2]:len()/2),mY-1)
+        mon.write(custom.customInfo[2])
       end
+    end
   end
 end
 
-function draw(sel,first)
-    local toDraw = custom.itemsDrawnAtOnce
-    getPages()
-    square(3,5,mX/2+3,7,custom.itemInfoBar.bg)
-    mon.setTextColor(custom.itemInfoBar.fg)
-    mon.setCursorPos(4,6)
-    mon.write("Item")
-    mon.setCursorPos(mX/3-5,6)
-    mon.write("Stock")
-    mon.setCursorPos(mX/2-2,6)
-    mon.write("Price")
-    square(3,8,mX/2+3,8+toDraw,custom.background.bg)
-    for i = 1,toDraw do
-      local cur = i+(toDraw)*(page-1)
-      local cur1 = cur
-      cur = sIL[cur]
-      if cur then
-        if i%2 == 1 then
-          square(3,i+7,mX/2+3,i+7,custom.itemTableColor1.bg)
-          mon.setTextColor(custom.itemTableColor1.fg)
-        else
-          square(3,i+7,mX/2+3,i+7,custom.itemTableColor2.bg)
-          mon.setTextColor(custom.itemTableColor2.fg)
-        end
-        mon.setCursorPos(4,i+7)
-        mon.write(cur.display)
-        mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
-        mon.write(tostring(cur.count))
-        local a = tostring(cur.price):find("%.")
-        mon.setCursorPos(mX/2,i+7)
-        mon.write(".00")
-        if a then
-          mon.setCursorPos(mX/2+a-3,i+7)
-        else
-          mon.setCursorPos(mX/2-tostring(cur.price):len(),i+7)
-        end
-        mon.write(tostring(cur.price))
-      end
-    end
-    if page == mxPages then
-      buttons.pgUp.enabled = false
-    else
-      buttons.pgUp.enabled = true
-    end
-    if page == 1 then
-      buttons.pgDwn.enabled = false
-    else
-      buttons.pgDwn.enabled = true
-    end
-    drawButton(buttons.pgUp)
-    drawButton(buttons.pgDwn)
-    if sel then
-      local i = sel-7
-      selection = i+(page-1)*(toDraw)
-      local cur = sIL[selection]
-      if cur and i <= toDraw then
-        square(3,sel,mX/2+3,sel,custom.selection.bg)
-        mon.setTextColor(custom.selection.fg)
-        mon.setCursorPos(4,i+7)
-        mon.write(cur.display)
-        mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
-        mon.write(tostring(cur.count))
-        local a = tostring(cur.price):find("%.")
-        mon.setCursorPos(mX/2,i+7)
-        mon.write(".00")
-        if a then
-          mon.setCursorPos(mX/2+a-3,i+7)
-        else
-          mon.setCursorPos(mX/2-tostring(cur.price):len(),i+7)
-        end
-        mon.write(tostring(cur.price))
-        square(mX/2+5,18,mX-5,25,custom.bigSelection.bg)
-        mon.setTextColor(custom.bigSelection.fg)
-        mon.setCursorPos(mX/2+6,19)
-        mon.write(cur.display)
-        mon.setCursorPos(mX/2+6,20)
-        mon.write(tostring(cur.price).."KST each")
-        mon.setCursorPos(mX/2+6,21)
-        mon.write("x"..tostring(cur.count))
-        mon.setCursorPos(mX/2+6,22)
-        local tPrice = math.ceil(cur.count*cur.price)
-        mon.write("Whole stock price: "..tostring(tPrice))
-        mon.setCursorPos(mX/2+6,24)
-        mon.write("/pay "..pubKey.." "..tPrice)
+local function draw(sel,first)
+  local toDraw = custom.itemsDrawnAtOnce
+  getPages()
+  square(3,5,mX/2+3,7,custom.itemInfoBar.bg)
+  mon.setTextColor(custom.itemInfoBar.fg)
+  mon.setCursorPos(4,6)
+  mon.write("Item")
+  mon.setCursorPos(mX/3-5,6)
+  mon.write("Stock")
+  mon.setCursorPos(mX/2-2,6)
+  mon.write("Price")
+  square(3,8,mX/2+3,8+toDraw,custom.background.bg)
+  for i = 1,toDraw do
+    local cur = i+(toDraw)*(page-1)
+    local cur1 = cur
+    cur = sIL[cur]
+    if cur then
+      if i%2 == 1 then
+        square(3,i+7,mX/2+3,i+7,custom.itemTableColor1.bg)
+        mon.setTextColor(custom.itemTableColor1.fg)
       else
-        square(mX/2+5,18,mX-5,25,custom.background.bg)
+        square(3,i+7,mX/2+3,i+7,custom.itemTableColor2.bg)
+        mon.setTextColor(custom.itemTableColor2.fg)
       end
+      mon.setCursorPos(4,i+7)
+      mon.write(cur.display)
+      mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
+      mon.write(tostring(cur.count))
+      local a = tostring(cur.price):find("%.")
+      mon.setCursorPos(mX/2,i+7)
+      mon.write(".00")
+      if a then
+        mon.setCursorPos(mX/2+a-3,i+7)
+      else
+        mon.setCursorPos(mX/2-tostring(cur.price):len(),i+7)
+      end
+      mon.write(tostring(cur.price))
+    end
+  end
+  if page == mxPages then
+    buttons.pgUp.enabled = false
+  else
+    buttons.pgUp.enabled = true
+  end
+  if page == 1 then
+    buttons.pgDwn.enabled = false
+  else
+    buttons.pgDwn.enabled = true
+  end
+  drawButton(buttons.pgUp)
+  drawButton(buttons.pgDwn)
+  if sel then
+    local i = sel-7
+    selection = i+(page-1)*(toDraw)
+    local cur = sIL[selection]
+    if cur and i <= toDraw then
+      square(3,sel,mX/2+3,sel,custom.selection.bg)
+      mon.setTextColor(custom.selection.fg)
+      mon.setCursorPos(4,i+7)
+      mon.write(cur.display)
+      mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
+      mon.write(tostring(cur.count))
+      local a = tostring(cur.price):find("%.")
+      mon.setCursorPos(mX/2,i+7)
+      mon.write(".00")
+      if a then
+        mon.setCursorPos(mX/2+a-3,i+7)
+      else
+        mon.setCursorPos(mX/2-tostring(cur.price):len(),i+7)
+      end
+      mon.write(tostring(cur.price))
+      square(mX/2+5,18,mX-5,25,custom.bigSelection.bg)
+      mon.setTextColor(custom.bigSelection.fg)
+      mon.setCursorPos(mX/2+6,19)
+      mon.write(cur.display)
+      mon.setCursorPos(mX/2+6,20)
+      mon.write(tostring(cur.price).."KST each")
+      mon.setCursorPos(mX/2+6,21)
+      mon.write("x"..tostring(cur.count))
+      mon.setCursorPos(mX/2+6,22)
+      local tPrice = math.ceil(cur.count*cur.price)
+      mon.write("Whole stock price: "..tostring(tPrice))
+      mon.setCursorPos(mX/2+6,24)
+      mon.write("/pay "..pubKey.." "..tPrice)
     else
       square(mX/2+5,18,mX-5,25,custom.background.bg)
     end
-    square(mX/2+5,8,mX-5,16,custom.bigInfo.bg)
-    mon.setTextColor(custom.bigInfo.fg)
-    mon.setCursorPos((3*mX)/4-6,9)
-    mon.write("Information")
-    if custom.showCustomBigInfo then
-      for i = 1,4 do
-        custom.customBigInfo[i] = custom.customBigInfo[i]:gsub("PUBKEY",pubKey)
-      end
-      mon.setCursorPos((3*mX)/4-custom.customBigInfo[1]:len()/2,11)
-      mon.write(custom.customBigInfo[1])
-      mon.setCursorPos((3*mX)/4-custom.customBigInfo[2]:len()/2,12)
-      mon.write(custom.customBigInfo[2])
-      mon.setCursorPos((3*mX)/4-custom.customBigInfo[3]:len()/2,13)
-      mon.write(custom.customBigInfo[3])
-      mon.setCursorPos((3*mX)/4-custom.customBigInfo[4]:len()/2,14)
-      mon.write(custom.customBigInfo[4])
-    else
-      local ln1 = "This shop's address is:"
-      local ln2 = pubKey
-      local ln3 = "Send Krist to this address after"
-      local ln4 = "selecting an item to buy."
-      mon.setCursorPos((3*mX)/4-ln1:len()/2,11)
-      mon.write(ln1)
-      mon.setCursorPos((3*mX)/4-ln2:len()/2,12)
-      mon.write(ln2)
-      mon.setCursorPos((3*mX)/4-ln3:len()/2,13)
-      mon.write(ln3)
-      mon.setCursorPos((3*mX)/4-ln4:len()/2,14)
-      mon.write(ln4)
+  else
+    square(mX/2+5,18,mX-5,25,custom.background.bg)
+  end
+  square(mX/2+5,8,mX-5,16,custom.bigInfo.bg)
+  mon.setTextColor(custom.bigInfo.fg)
+  mon.setCursorPos((3*mX)/4-6,9)
+  mon.write("Information")
+  if custom.showCustomBigInfo then
+    for i = 1,4 do
+      custom.customBigInfo[i] = custom.customBigInfo[i]:gsub("PUBKEY",pubKey)
     end
-    if custom.touchHereForCobbleButton then
-      buttons.cobble.enabled = true
-      drawButton(buttons.cobble)
-    end
+    mon.setCursorPos((3*mX)/4-custom.customBigInfo[1]:len()/2,11)
+    mon.write(custom.customBigInfo[1])
+    mon.setCursorPos((3*mX)/4-custom.customBigInfo[2]:len()/2,12)
+    mon.write(custom.customBigInfo[2])
+    mon.setCursorPos((3*mX)/4-custom.customBigInfo[3]:len()/2,13)
+    mon.write(custom.customBigInfo[3])
+    mon.setCursorPos((3*mX)/4-custom.customBigInfo[4]:len()/2,14)
+    mon.write(custom.customBigInfo[4])
+  else
+    local ln1 = "This shop's address is:"
+    local ln2 = pubKey
+    local ln3 = "Send Krist to this address after"
+    local ln4 = "selecting an item to buy."
+    mon.setCursorPos((3*mX)/4-ln1:len()/2,11)
+    mon.write(ln1)
+    mon.setCursorPos((3*mX)/4-ln2:len()/2,12)
+    mon.write(ln2)
+    mon.setCursorPos((3*mX)/4-ln3:len()/2,13)
+    mon.write(ln3)
+    mon.setCursorPos((3*mX)/4-ln4:len()/2,14)
+    mon.write(ln4)
+  end
+  if custom.touchHereForCobbleButton then
+    buttons.cobble.enabled = true
+    drawButton(buttons.cobble)
+  end
 end
-
-function square(x1,y1,x2,y2,c)
-    if c then
-        mon.setBackgroundColor(c)
-    end
-    local dist = x2-x1+1
-    dist = string.rep(" ",dist)
-    for i = y1,y2 do
-        mon.setCursorPos(x1,i)
-        mon.write(dist)
-    end
-end
-
-function inBetween(x1,y1,x2,y2,x,y)
-    return x >= x1 and x <= x2 and y >= y1 and y <= y2
-end
-
-buttons = {
-    cobble = {
-      x1 = 29,
-      y1 = mY-7,
-      x2 = 41,
-      y2 = mY-5,
-      content = "Free Cobble (UNKNOWN)",
-      enabled = false,
-    },
-    pgUp = {
-        x1 = 17,
-        y1 = mY-7,
-        x2 = 27,
-        y2 = mY-5,
-        content = "Next Page",
-        enabled = false,
-    },
-    pgDwn = {
-        x1 = 5,
-        y1 = mY-7,
-        x2 = 15,
-        y2 = mY-5,
-        content = "Prev Page",
-        enabled = false,
-    },
-}
-function drawButton(BUTT)
-    if BUTT.enabled then
-        mon.setBackgroundColor(custom.buttons.bg)
-        mon.setTextColor(custom.buttons.fg)
-    else
-        mon.setBackgroundColor(custom.disabledButtons.bg)
-        mon.setTextColor(custom.disabledButtons.fg)
-    end
-    local dist = BUTT.x2 - BUTT.x1+1
-    dist = string.rep(" ",dist)
-    for o = BUTT.y1,BUTT.y2 do
-        mon.setCursorPos(BUTT.x1,o)
-        mon.write(dist)
-    end
-    mon.setCursorPos(BUTT.x1+(BUTT.x2-BUTT.x1)/2-(BUTT.content:len()/2)+0.5,BUTT.y1+(BUTT.y2-BUTT.y1)/2)
-    mon.write(BUTT.content)
-end
-function whichPress(x,y)
-    for k,v in pairs(buttons) do
-        if v.enabled and inBetween(v.x1,v.y1,v.x2,v.y2,x,y) then
-            return k
-        end
-    end
-    return "None"
-end
-
 
 -------------BEGIN-------------
 checkAllTheThings()
 sortItems()
 refreshItems()
 drawBG()
-draw()
 
 jua.on("timer",function(evt,tmr)
   if tmr == rPressTimer then
@@ -1023,144 +1038,143 @@ jua.on("timer",function(evt,tmr)
 end)
 
 jua.on("monitor_resize",function()
-    mX,mY = mon.getSize()
-    drawBG()
-    draw()
+  mX,mY = mon.getSize()
+  drawBG()
+  draw()
 end)
 
 jua.on("monitor_touch",function(nm,side,x,y)
-    if side == mName then
-        logger.info("Started 30 second timer, there was a touch to the monitor.")
-        recentPress = true
-        rPressTimer = os.startTimer(30)
-        local pressed = whichPress(x,y)
-        local max = #sIL
-        if inBetween(3,8,mX/2+3,8+custom.itemsDrawnAtOnce,x,y) then
-          draw(y)
-        end
-
-        if pressed == "pgUp" then
-          page = page + 1
-          draw()
-        elseif pressed == "pgDwn" then
-          page = page - 1
-          draw()
-        elseif pressed == "cobble" then
-          grabItems("minecraft:cobblestone",0,64)
-        end
+  if side == mName then
+    logger.info("Started 30 second timer, there was a touch to the monitor.")
+    recentPress = true
+    rPressTimer = os.startTimer(30)
+    local pressed = whichPress(x,y)
+    local max = #sIL
+    if inBetween(3,8,mX/2+3,8+custom.itemsDrawnAtOnce,x,y) then
+      draw(y)
     end
+    if pressed == "pgUp" then
+      page = page + 1
+      draw()
+    elseif pressed == "pgDwn" then
+      page = page - 1
+      draw()
+    elseif pressed == "cobble" then
+      grabItems("minecraft:cobblestone",0,64)
+    end
+  end
 end)
 
 
-
-function mainJua()
-jua.setInterval(function()
-  logger.info("Redraw")
-  if not recentPress then
-    refreshItems()
-    draw()
-  end
-end,30)
-
-jua.on("terminate",function()
-  if ws then ws.close() end
-  jua.stop()
-  bsod("Terminated")
-  logger.severe("Why would you terminate me like this?")
-  if logger.canLogBeOpened then
-    logger.closeLog()
-  end
-  if logger.canPurchaseLogBeOpened then
-    logger.closePurchaseLog()
-  end
-  printError("I can't believe you've done this.")
-end)
+local function writeLine(txt)
+  local bX,bY = mon.getCursorPos()
+  mon.write(txt)
+  mon.setCursorPos(1,bY+1)
+end
+local function bsod(err)
+  mon.setTextScale(0.5)
+  mon.setBackgroundColor(colors.blue)
+  mon.clear()
+  local mxX,mxY = mon.getSize()
+  mon.setCursorPos(1,mxY/2)
+  writeLine("The shop encountered an error it could not recover from")
+  writeLine(err)
+end
 
 
-jua.go(function()
+
+local function mainJua()
+  jua.setInterval(function()
+    logger.info("Redraw")
+    if not recentPress then
+      refreshItems()
+      draw()
+    end
+  end,30)
+
+  jua.on("terminate",function()
+    if ws then ws.close() end
+    jua.stop()
+    bsod("Terminated")
+    logger.severe("Why would you terminate me like this?")
+    if logger.canLogBeOpened then
+      logger.closeLog()
+    end
+    if logger.canPurchaseLogBeOpened then
+      logger.closePurchaseLog()
+    end
+    printError("I can't believe you've done this.")
+  end)
+
+
+  jua.go(function()
     local success,ws = await(k.connect,privKey)
     if success then
-        logger.info("Connected to websocket")
-        ws.on("hello",function(data)
-            logger.info("MOTD: "..data.motd)
-            local success = await(ws.subscribe,"transactions",function(data)
-                local tx = data.transaction
-                --if tx.from ~= pubKey then
-                logger.info("Payment to: "..tx.to.." (we are "..pubKey..")")
-                local meta = nil
-                if tx.metadata then
-                    meta = k.parseMeta(tx.metadata)
+      logger.info("Connected to websocket")
+      ws.on("hello",function(data)
+        logger.info("MOTD: "..data.motd)
+        local success = await(ws.subscribe,"transactions",function(data)
+          local tx = data.transaction
+          --if tx.from ~= pubKey then
+          logger.info("Payment to: "..tx.to.." (we are "..pubKey..")")
+          local meta = nil
+          if tx.metadata then
+            meta = k.parseMeta(tx.metadata)
+          end
+          if not meta.meta["return"] and tx.to == pubKey then
+            refund(tx.from,tx.value,custom.REFUNDS.badAddress)
+          end
+          if selection and tx.to == pubKey then
+            logger.info("Payment being processed.")
+            local item = sIL[selection]
+            if item.count > 0 then
+              local paid = tx.value
+              local items_required = math.floor(paid/item.price)
+              local items_grabbed = grabItems(item.find,item.damage,items_required)
+              if items_grabbed > 0 then
+                logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid)
+              end
+              local over = paid%item.price
+              local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
+              if item.price > paid then
+                refund(meta.meta["return"],tx.value,custom.REFUNDS.underpay)
+              else
+                if refundAmt > 0 then
+                  refund(meta.meta["return"],refundAmt,custom.REFUNDS.change)
+                  logger.purchase("Sent refund of "..refundAmt.." due to overpay.")
                 end
-                if not meta.meta["return"] and tx.to == pubKey then
-                    refund(tx.from,tx.value,custom.REFUNDS.badAddress)
-                end
-                if selection and tx.to == pubKey then
-                    logger.info("Payment being processed.")
-                    local item = sIL[selection]
-                    if item.count > 0 then
-                      local paid = tx.value
-                      local items_required = math.floor(paid/item.price)
-                      local items_grabbed = grabItems(item.find,item.damage,items_required)
-                      if items_grabbed > 0 then
-                        logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid)
-                      end
-                      local over = paid%item.price
-                      local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
-                      if item.price > paid then
-                        refund(meta.meta["return"],tx.value,custom.REFUNDS.underpay)
-                      else
-                        if refundAmt > 0 then
-                          refund(meta.meta["return"],refundAmt,custom.REFUNDS.change)
-                          logger.purchase("Sent refund of "..refundAmt.." due to overpay.")
-                        end
-                      end
-                    else
-                      refund(meta.meta["return"],tx.value,custom.REFUNDS.outOfStock)
-                      logger.purchase("Sent refund of "..tx.value.." due to not having the item selected.")
-                    end
-                else
-                    if tx.to == pubKey then
-                        logger.purchase("No item selected, but we were payed!  Returning...")
-                        if meta.meta["return"] then
-                            refund(meta.meta["return"],tx.value,custom.REFUNDS.noItemSelected)
-
-                        end
-                    end
-                end
-                --end
-            end)
-            logger.ree()
-            if success then
-                logger.info("Subscribed to transactions")
+              end
             else
-                jua.stop()
-                logger.severe("Failed to subscribe")
-                error()
+              refund(meta.meta["return"],tx.value,custom.REFUNDS.outOfStock)
+              logger.purchase("Sent refund of "..tx.value.." due to not having the item selected.")
             end
+          else
+            if tx.to == pubKey then
+              logger.purchase("No item selected, but we were payed!  Returning...")
+              if meta.meta["return"] then
+                refund(meta.meta["return"],tx.value,custom.REFUNDS.noItemSelected)
+              end
+            end
+          end
         end)
+        logger.ree()
+        if success then
+          logger.info("Subscribed to transactions")
+        else
+          jua.stop()
+          logger.severe("Failed to subscribe")
+          error()
+        end
+      end)
     else
-        jua.stop()
-        logger.severe("Failed to connect to kriststuff")
-        error()
+      jua.stop()
+      logger.severe("Failed to connect to kriststuff")
+      error()
     end
-end)
+  end)
 end
 
 --------------------------
-local function writeLine(txt)
-    local bX,bY = mon.getCursorPos()
-    mon.write(txt)
-    mon.setCursorPos(1,bY+1)
-end
-function bsod(err)
-    mon.setTextScale(0.5)
-    mon.setBackgroundColor(colors.blue)
-    mon.clear()
-    local mxX,mxY = mon.getSize()
-    mon.setCursorPos(1,mxY/2)
-    writeLine("The shop encountered an error it could not recover from")
-    writeLine(err)
-end
 
 
 
@@ -1168,12 +1182,17 @@ end
 local suc,err = pcall(mainJua)
 
 if not suc then
-    logger.severe(err)
-    bsod(err)
+  logger.severe(err)
+  bsod(err)
+  if logger.canLogBeOpened then
     logger.closeLog()
-    if err ~= "Terminated" then
-      writeLine("Reboot in 30 seconds.")
-      os.sleep(30)
-      os.reboot()
-    end
+  end
+  if logger.canPurchaseLogBeOpened then
+    logger.closePurchaseLog()
+  end
+  if err ~= "Terminated" then
+    writeLine("Reboot in 30 seconds.")
+    os.sleep(30)
+    os.reboot()
+  end
 end
