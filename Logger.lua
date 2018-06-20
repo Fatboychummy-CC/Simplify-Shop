@@ -1,11 +1,11 @@
 --[[
-1.2
+1.2001
 REQUIRED
-Added the basic stuff for updating the log
+Push to test the updater
 Logger, designed for Krist Shops.  You may edit and reuse this to your heart's content.
 ]]
 
-logVersion = 1.2
+logVersion = 1.2001
 local custom = false
 
 local LOG_LOCATION = false
