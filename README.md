@@ -30,6 +30,14 @@ You can play around with these values to see what each does.
 
 If you get something wrong, a built-in check will notify you of the error at startup.
 
+#### Alternatively.....
+You can also run `<shopfilename> setup` to get the basic requirements set up.
+The setup argument asks you for the following:
+1. Your kristwallet password
+2. If the krist address associated with the password is the right one
+3. What type of storage you will use
+4. and more minor things
+
 ### The ITEM DATA FILE
 Upon running the program, a file named "fatItemData" will be created. It is a serialized lua table, with 3 items placed within.
 
