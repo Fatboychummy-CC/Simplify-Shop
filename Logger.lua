@@ -1,3 +1,11 @@
+--[[
+1.2
+REQUIRED
+Added the basic stuff for updating the log
+Logger, designed for Krist Shops.  You may edit and reuse this to your heart's content.
+]]
+
+logVersion = 1.2
 local custom = false
 
 local LOG_LOCATION = false
@@ -80,6 +88,65 @@ if fs.exists("fatShopCustomization") then
     end
   end
 end
+
+function isUpdate()
+  local handle = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
+  handle.readLine()
+  local v = tonumber(handle.readLine())
+  handle.close()
+  return v > logVersion
+end
+function update()
+  print("An update to the logger is available.")
+  local h1 = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
+  h1.readLine()
+  local v = tonumber(h1.readLine())
+  local required = h1.readLine()
+  local notes = h1.readLine()
+  local doUpdate = false
+  if required == "REQUIRED" then
+    doUpdate = true
+    print("Update is a required update.  Updating in 5 seconds.")
+    print("-----------------")
+    print(notes)
+    print("-----------------")
+    os.sleep(5)
+  else
+    print("Update is not a required update.")
+    print("-----------------")
+    print(notes)
+    print("-----------------")
+    print("Would you like to update now?")
+    local utm = os.startTimer(30)
+    while true do
+      local a = {os.pullEvent()}
+      if a[1] == "char" then
+        if a[2] == "y" then
+          doUpdate = true
+          break
+        elseif a[2] == "n" then
+          break
+        end
+      elseif a[1] == "timer" and a[2] == utm then
+        break
+      end
+    end
+    if not doUpdate then
+      print("Timed out or skipping update.")
+    end
+  end
+
+  if doUpdate then
+    local handle = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
+    fs.delete("logger.lua")
+    local h2 = fs.open("logger.lua","w")
+    h2.write(handle.readAll())
+    handle.close()
+    h2.close()
+  end
+end
+
+
 function purchase(a)
   if term.isColor and term.isColor() then
     local oldC = term.getTextColor()
