@@ -1,7 +1,6 @@
 --[[
-1.4
-Require
-Separated the log updater; and added the "setup" function.  Run "<shopfilename> setup" to have the basics set up for you.  WARNING: This WILL delete your current setup, use with caution.  Made the private-key check more strict.
+1.41
+Fixed a small bug in reading the privatekey
 ]]
 
 --[[
@@ -10,7 +9,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 1.4
+local version = 1.41
 local tArgs = {...}
 
 
@@ -951,8 +950,10 @@ local function checkData()
 end
 
 local function checkKey()
-  if checkKristAddress(privKey) ~= pubKey then
+  if k.makev2address(privKey) ~= pubKey then
     logger.severe("Your private-key and public-key are mismatched!")
+    print("Your private-key evaluates to...",k.makev2address(privKey))
+    print("Your public-key is written as...",pubKey)
     error("Private-key must evaluate to public-key.")
   else
     print("Private-key and public-key match.")
