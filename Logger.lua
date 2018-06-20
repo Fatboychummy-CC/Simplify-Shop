@@ -1,11 +1,11 @@
 --[[
-1.2002
+1.3
 no
 Push to test the updater again
 Logger, designed for Krist Shops.  You may edit and reuse this to your heart's content.
 ]]
 
-logVersion = 1.2002
+logVersion = 1.3
 local custom = false
 
 local LOG_LOCATION = false
