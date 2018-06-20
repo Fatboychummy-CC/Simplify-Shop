@@ -133,6 +133,7 @@ function update()
     end
     if not doUpdate then
       print("Timed out or skipping update.")
+      return false
     end
   end
 
@@ -143,7 +144,9 @@ function update()
     h2.write(handle.readAll())
     handle.close()
     h2.close()
+    return true
   end
+  return false
 end
 
 
