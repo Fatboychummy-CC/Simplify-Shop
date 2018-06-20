@@ -1,7 +1,7 @@
 --[[
 1.4
-noRequire
-Added a simple "Setup" function.  Call it by running "<filename> setup".  WARNING: This overwrites your currently saved settings.
+Require
+Separated the log updater; and added the "setup" function.  Run "<shopfilename> setup" to have the basics set up for you.  WARNING: This WILL delete your current setup, use with caution.  Made the private-key check more strict.
 ]]
 
 --[[
@@ -34,11 +34,14 @@ if not fs.exists("logger.lua") then
 end
 
 ------CHECK FOR UPDATES
+os.unloadAPI("logger.lua")
+os.loadAPI("logger.lua")
+
 if true then
+  local didUpdate = false
   local handle = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/shop.lua")
   handle.readLine()
   local v = tonumber(handle.readLine())
-  local noRequire = handle.readLine()
   local notes = handle.readLine()
   if v < version then
     print(v,"<",version)
@@ -56,23 +59,15 @@ if true then
     print("--------------------------------")
     print("Would you like to do the update now? (Y/N)")
     local utm = os.startTimer(30)
-    local yes = false
     while true do
       local a = {os.pullEvent()}
       if a[1] == "char" then
         if a[2] == "y" then
           fs.delete(shell.getRunningProgram())
           shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/shop.lua startup")
-          if noRequire == "noRequire" then
-            print("New Logger file is not required")
-          else
-            print("New logger file is required.")
-            fs.delete("logger.lua")
-            shell.run("wget https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua logger.lua")
-          end
-          print("Update complete, rebooting...")
-          os.sleep(2)
-          os.reboot()
+          print("Update complete.")
+          didUpdate = true
+          break
         elseif a[2] == "n" then
           break
         end
@@ -80,12 +75,25 @@ if true then
         break
       end
     end
-    if yes then
-    else
+    if not didUpdate then
       print("Timed out or skipping update.")
     end
   else
     print("Up to date.")
+  end
+  if logger.isUpdate() then
+    if logger.update() then
+      didUpdate = true
+    end
+  else
+    print("Logger is up to date.")
+  end
+
+
+  if didUpdate then
+    print("Rebooting.")
+    os.sleep(2)
+    os.reboot()
   end
 end
 ------END
@@ -104,8 +112,7 @@ k.init(jua,json,w,r)
 
 
 ---------------------------------------------------
-os.unloadAPI("logger.lua")
-os.loadAPI("logger.lua")
+
 if logger.canLogBeOpened then
   logger.openLog()
 end
@@ -287,6 +294,24 @@ local function fixCustomization(key)
       ao("    fg = colors.white,")
     end
     ao("  },")
+    ao("  selectedEmptyStock = {")
+    if chk(custom.selectedEmptyStock) then
+      ao(custom.selectedEmptyStock.bg and "   bg = "..clr[custom.selectedEmptyStock.bg].."," or "   bg = colors.red,")
+      ao(custom.selectedEmptyStock.fg and "   fg = "..clr[custom.selectedEmptyStock.fg].."," or "   fg = colors.white,")
+    else
+      ao("    bg = colors.red,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  bigSelectionEmptyStock = {")
+    if chk(custom.bigSelectionEmptyStock) then
+      ao(custom.bigSelectionEmptyStock.bg and "   bg = "..clr[custom.bigSelectionEmptyStock.bg].."," or "   bg = colors.red,")
+      ao(custom.bigSelectionEmptyStock.fg and "   fg = "..clr[custom.bigSelectionEmptyStock.fg].."," or "   fg = colors.white,")
+    else
+      ao("    bg = colors.red,")
+      ao("    fg = colors.white,")
+    end
+    ao("  },")
     ao("  bigInfo = {")
     if chk(custom.bigInfo) then
       ao(custom.bigInfo.bg  and "    bg = "..clr[custom.bigInfo.bg].."," or "    bg = colors.black,")
@@ -312,6 +337,15 @@ local function fixCustomization(key)
     else
       ao("    bg = colors.black,")
       ao("    fg = colors.white,")
+    end
+    ao("  },")
+    ao("  itemTableEmptyStock = {")
+    if chk(custom.itemTableEmptyStock) then
+      ao(custom.itemTableEmptyStock.bg and "    bg = "..clr[custom.itemTableEmptyStock.bg].."," or "    bg = colors.black,")
+      ao(custom.itemTableEmptyStock.fg and "    fg = "..clr[custom.itemTableEmptyStock.fg].."," or "    fg = colors.red,")
+    else
+      ao("    bg = colors.black,")
+      ao("    fg = colors.red,")
     end
     ao("  },")
     ao("  REFUNDS = {")
@@ -598,9 +632,6 @@ if tArgs[1] == "setup" then
   hand.close()
 
   fixCustomization()
-
-  logger.info("Basic setup complete.")
-  error("Setup complete.")
 end
 
 
@@ -798,6 +829,14 @@ local function writeCustomization(name)
     ao("    bg = colors.black,")
     ao("    fg = colors.white,")
     ao("  },")
+    ao("  selectedEmptyStock = {")
+    ao("    bg = colors.red,")
+    ao("    fg = colors.white,")
+    ao("  },")
+    ao("  bigSelectionEmptyStock = {")
+    ao("    bg = colors.red,")
+    ao("    fg = colors.white,")
+    ao("  },")
     ao("  bigInfo = {")
     ao("    bg = colors.black,")
     ao("    fg = colors.white,")
@@ -810,6 +849,11 @@ local function writeCustomization(name)
     ao("    bg = colors.black,")
     ao("    fg = colors.white,")
     ao("  },")
+    ao("  itemTableEmptyStock = {")
+    ao("    bg = colors.black,")
+    ao("    fg = colors.red,")
+    ao("  },")
+
     ao("  REFUNDS = {")
     ao("    noItemSelected = \"There is no item selected!\",")
     ao("    underpay = \"You seem to have underpaid.\",")
@@ -906,9 +950,19 @@ local function checkData()
   return true
 end
 
+local function checkKey()
+  if checkKristAddress(privKey) ~= pubKey then
+    logger.severe("Your private-key and public-key are mismatched!")
+    error("Private-key must evaluate to public-key.")
+  else
+    print("Private-key and public-key match.")
+  end
+end
+
 local function checkAllTheThings()
   checkCustomization()
   checkData()
+  checkKey()
 end
 
 
@@ -1163,12 +1217,17 @@ local function draw(sel,first)
     local cur1 = cur
     cur = sIL[cur]
     if cur then
-      if i%2 == 1 then
-        square(3,i+7,mX/2+3,i+7,custom.itemTableColor1.bg)
-        mon.setTextColor(custom.itemTableColor1.fg)
+      if cur.count == 0 then
+        square(3,i+7,mX/2+3,i+7,custom.itemTableEmptyStock.bg)
+        mon.setTextColor(custom.itemTableEmptyStock.fg)
       else
-        square(3,i+7,mX/2+3,i+7,custom.itemTableColor2.bg)
-        mon.setTextColor(custom.itemTableColor2.fg)
+        if i%2 == 1 then
+          square(3,i+7,mX/2+3,i+7,custom.itemTableColor1.bg)
+          mon.setTextColor(custom.itemTableColor1.fg)
+        else
+          square(3,i+7,mX/2+3,i+7,custom.itemTableColor2.bg)
+          mon.setTextColor(custom.itemTableColor2.fg)
+        end
       end
       mon.setCursorPos(4,i+7)
       mon.write(cur.display)
@@ -1202,8 +1261,13 @@ local function draw(sel,first)
     selection = i+(page-1)*(toDraw)
     local cur = sIL[selection]
     if cur and i <= toDraw then
-      square(3,sel,mX/2+3,sel,custom.selection.bg)
-      mon.setTextColor(custom.selection.fg)
+      if cur.count == 0 then
+        square(3,sel,mX/2+3,sel,custom.selectedEmptyStock.bg)
+        mon.setTextColor(custom.selectedEmptyStock.fg)
+      else
+        square(3,sel,mX/2+3,sel,custom.selection.bg)
+        mon.setTextColor(custom.selection.fg)
+      end
       mon.setCursorPos(4,i+7)
       mon.write(cur.display)
       mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
@@ -1217,8 +1281,13 @@ local function draw(sel,first)
         mon.setCursorPos(mX/2-tostring(cur.price):len(),i+7)
       end
       mon.write(tostring(cur.price))
-      square(mX/2+5,18,mX-5,25,custom.bigSelection.bg)
-      mon.setTextColor(custom.bigSelection.fg)
+      if cur.count == 0 then
+        square(mX/2+5,18,mX-5,25,custom.bigSelectionEmptyStock.bg)
+        mon.setTextColor(custom.bigSelectionEmptyStock.fg)
+      else
+        square(mX/2+5,18,mX-5,25,custom.bigSelection.bg)
+        mon.setTextColor(custom.bigSelection.fg)
+      end
       mon.setCursorPos(mX/2+6,19)
       mon.write(cur.display)
       mon.setCursorPos(mX/2+6,20)
