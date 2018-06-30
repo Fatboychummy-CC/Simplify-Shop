@@ -1,6 +1,6 @@
 --[[
-1.42
-Separated the log updater; and added the "setup" function.  Run "<shopfilename> setup" to have the basics set up for you.  WARNING: This WILL delete your current setup, use with caution.
+1.45
+No more auto-refund on recieving krist from another krist-address.  Players no longer HAVE to use /pay.
 ]]
 
 --[[
@@ -9,7 +9,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 1.42
+local version = 1.45
 local tArgs = {...}
 
 
@@ -1443,8 +1443,10 @@ local function mainJua()
           if tx.metadata then
             meta = k.parseMeta(tx.metadata)
           end
-          if not meta.meta["return"] and tx.to == pubKey then
-            meta.meta["return"] = tx.from
+          if not meta or not meta.meta or not meta.meta["return"] then
+            returnTo = tx.from
+          else
+            returnTo = meta.meta["return"]
           end
           if selection and tx.to == pubKey then
             logger.info("Payment being processed.")
@@ -1459,22 +1461,22 @@ local function mainJua()
               local over = paid%item.price
               local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
               if item.price > paid then
-                refund(meta.meta["return"],tx.value,custom.REFUNDS.underpay)
+                refund(returnTo,tx.value,custom.REFUNDS.underpay)
               else
                 if refundAmt > 0 then
-                  refund(meta.meta["return"],refundAmt,custom.REFUNDS.change)
+                  refund(returnTo,refundAmt,custom.REFUNDS.change)
                   logger.purchase("Sent refund of "..refundAmt.." due to overpay.")
                 end
               end
             else
-              refund(meta.meta["return"],tx.value,custom.REFUNDS.outOfStock)
+              refund(returnTo,tx.value,custom.REFUNDS.outOfStock)
               logger.purchase("Sent refund of "..tx.value.." due to not having the item selected.")
             end
           else
             if tx.to == pubKey then
               logger.purchase("No item selected, but we were payed!  Returning...")
-              if meta.meta["return"] then
-                refund(meta.meta["return"],tx.value,custom.REFUNDS.noItemSelected)
+              if returnTo then
+                refund(returnTo,tx.value,custom.REFUNDS.noItemSelected)
               end
             end
           end
