@@ -1,5 +1,5 @@
 --[[
-1.41
+1.42
 Separated the log updater; and added the "setup" function.  Run "<shopfilename> setup" to have the basics set up for you.  WARNING: This WILL delete your current setup, use with caution.
 ]]
 
@@ -9,7 +9,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 1.41
+local version = 1.42
 local tArgs = {...}
 
 
