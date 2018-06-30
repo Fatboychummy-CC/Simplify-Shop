@@ -1,6 +1,6 @@
 --[[
 1.41
-Fixed a small bug in reading the privatekey
+Separated the log updater; and added the "setup" function.  Run "<shopfilename> setup" to have the basics set up for you.  WARNING: This WILL delete your current setup, use with caution.
 ]]
 
 --[[
@@ -80,12 +80,13 @@ if true then
   else
     print("Up to date.")
   end
+
   if logger.isUpdate() then
     if logger.update() then
       didUpdate = true
     end
   else
-    print("Logger is up to date.")
+    logger.info("Logger is up to date.")
   end
 
 
@@ -952,11 +953,11 @@ end
 local function checkKey()
   if k.makev2address(privKey) ~= pubKey then
     logger.severe("Your private-key and public-key are mismatched!")
-    print("Your private-key evaluates to...",k.makev2address(privKey))
-    print("Your public-key is written as...",pubKey)
+    printError("Your private-key evaluates to...",k.makev2address(privKey))
+    printError("Your public-key is written as...",pubKey)
     error("Private-key must evaluate to public-key.")
   else
-    print("Private-key and public-key match.")
+    logger.info("Private-key and public-key match.")
   end
 end
 
@@ -1443,7 +1444,7 @@ local function mainJua()
             meta = k.parseMeta(tx.metadata)
           end
           if not meta.meta["return"] and tx.to == pubKey then
-            refund(tx.from,tx.value,custom.REFUNDS.badAddress)
+            meta.meta["return"] = tx.from
           end
           if selection and tx.to == pubKey then
             logger.info("Payment being processed.")
