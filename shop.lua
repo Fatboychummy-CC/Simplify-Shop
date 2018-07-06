@@ -1,6 +1,6 @@
 --[[
-1.45
-No more auto-refund on recieving krist from another krist-address.  Players no longer HAVE to use /pay.
+1.5
+COMPACT MODE IS HERE!  The shop now can be run on monitors which are 1 or 2 blocks high (though it works best with 2).  I also added a second "itemTableEmptyStock" in the fatShopCustomization file for use with multi-color item listing.
 ]]
 
 --[[
@@ -9,7 +9,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 1.45
+local version = 1.5
 local tArgs = {...}
 
 
@@ -185,8 +185,9 @@ local function fixCustomization(key)
     ao("data = {")
     ao(custom.owner and "  owner = \""..custom.owner.."\"," or "  owner = \"Nobody\",")
     ao(custom.shopName and "  shopName = \""..custom.shopName.."\"," or  "  shopName = \"Unnamed Shop\",")
+    ao(type(custom.drawBottomInfoBar) == "boolean" and "  drawBottomInfoBar = "..tostring(custom.drawBottomInfoBar).."," or "  drawBottomInfoBar = true,")
     ao(type(custom.showCustomInfo) == "boolean" and "  showCustomInfo = "..tostring(custom.showCustomInfo).."," or "  showCustomInfo = true,")
-      ao("  customInfo = {")
+    ao("  customInfo = {")
     if chk(custom.customInfo) then
       ao((custom.customInfo and custom.customInfo[1]) and "    [ 1 ] = \"" .. custom.customInfo[1] .. "\"," or "    [ 1 ] = \"Edit customInfo variable to change me\",")
       ao((custom.customInfo and custom.customInfo[2]) and "    [ 2 ] = \"" .. custom.customInfo[2] .. "\"," or "    [ 2 ] = \"Up to two lines are permitted\",")
@@ -215,6 +216,7 @@ local function fixCustomization(key)
     ao(type(custom.useBothChestTypes) == "boolean" and "  useBothChestTypes = "..tostring(custom.useBothChestTypes).."," or "  useBothChestTypes = false,")
     ao(type(custom.useSingleChest) == "boolean" and "  useSingleChest = "..tostring(custom.useSingleChest)..", --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest." or "  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
     ao(custom.chestSide and "  chestSide = \""..custom.chestSide.."\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")" or "  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
+    ao(type(custom.compactMode) == "boolean" and "  compactMode = "..tostring(custom.compactMode).."," or "  compactMode = false,")
     ao("  farthestBackground = {")
     if chk(custom.farthestBackground) then
       ao(custom.farthestBackground.bg and "    bg = "..clr[custom.farthestBackground.bg].."," or "    bg = colors.black,")
@@ -339,10 +341,19 @@ local function fixCustomization(key)
       ao("    fg = colors.white,")
     end
     ao("  },")
-    ao("  itemTableEmptyStock = {")
-    if chk(custom.itemTableEmptyStock) then
-      ao(custom.itemTableEmptyStock.bg and "    bg = "..clr[custom.itemTableEmptyStock.bg].."," or "    bg = colors.black,")
-      ao(custom.itemTableEmptyStock.fg and "    fg = "..clr[custom.itemTableEmptyStock.fg].."," or "    fg = colors.red,")
+    ao("  itemTableEmptyStock1 = {")
+    if chk(custom.itemTableEmptyStock1) then
+      ao(custom.itemTableEmptyStock1.bg and "    bg = "..clr[custom.itemTableEmptyStock1.bg].."," or "    bg = colors.black,")
+      ao(custom.itemTableEmptyStock1.fg and "    fg = "..clr[custom.itemTableEmptyStock1.fg].."," or "    fg = colors.red,")
+    else
+      ao("    bg = colors.black,")
+      ao("    fg = colors.red,")
+    end
+    ao("  },")
+    ao("  itemTableEmptyStock2 = {")
+    if chk(custom.itemTableEmptyStock2) then
+      ao(custom.itemTableEmptyStock2.bg and "    bg = "..clr[custom.itemTableEmptyStock2.bg].."," or "    bg = colors.black,")
+      ao(custom.itemTableEmptyStock2.fg and "    fg = "..clr[custom.itemTableEmptyStock2.fg].."," or "    fg = colors.red,")
     else
       ao("    bg = colors.black,")
       ao("    fg = colors.red,")
@@ -353,13 +364,11 @@ local function fixCustomization(key)
       ao(custom.REFUNDS.noItemSelected and "    noItemSelected = \""..custom.REFUNDS.noItemSelected.."\"," or "    noItemSelected = \"There is no item selected!\",")
       ao(custom.REFUNDS.underpay and "    underpay = \""..custom.REFUNDS.underpay .."\"," or "    underpay = \"You seem to have underpaid.\",")
       ao(custom.REFUNDS.change and "    change = \""..custom.REFUNDS.change .."\"," or "    change = \"You overpaid by a small amount, here's your change!\",")
-      ao(custom.REFUNDS.badAddress and "    badAddress = \""..custom.REFUNDS.badAddress .."\"," or "    badAddress = \"Use /pay, do not transfer directly from another address!\",")
       ao(custom.REFUNDS.outOfStock and "    outOfStock = \""..custom.REFUNDS.outOfStock .."\"," or "    outOfStock = \"We do not have any stock of that item!\",")
     else
       ao("    noItemSelected = \"There is no item selected!\",")
       ao("    underpay = \"You seem to have underpaid.\",")
       ao("    change = \"You overpaid by a small amount, here's your change.\",")
-      ao("    badAddress = \"Use /pay, do not transfer directly from another address.\",")
       ao("    outOfStock = \"We do not have any stock of that item!\",")
     end
     ao("  },")
@@ -776,6 +785,7 @@ local function writeCustomization(name)
     ao("data = {")
     ao("  owner = \"nobody\",")
     ao("  shopName = \"Unnamed Shop\",")
+    ao("  drawBottomInfoBar = true,")
     ao("  showCustomInfo = true,")
     ao("  customInfo = {")
     ao("    [ 1 ] = \"Edit customInfo variable to change me\",")
@@ -794,6 +804,7 @@ local function writeCustomization(name)
     ao("  useBothChestTypes = false,")
     ao("  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
     ao("  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
+    ao("  compactMode = false,")
     ao("  farthestBackground = {")
     ao("    bg = colors.black,")
     ao("  },")
@@ -849,7 +860,11 @@ local function writeCustomization(name)
     ao("    bg = colors.black,")
     ao("    fg = colors.white,")
     ao("  },")
-    ao("  itemTableEmptyStock = {")
+    ao("  itemTableEmptyStock1 = {")
+    ao("    bg = colors.black,")
+    ao("    fg = colors.red,")
+    ao("  },")
+    ao("  itemTableEmptyStock2 = {")
     ao("    bg = colors.black,")
     ao("    fg = colors.red,")
     ao("  },")
@@ -858,7 +873,6 @@ local function writeCustomization(name)
     ao("    noItemSelected = \"There is no item selected!\",")
     ao("    underpay = \"You seem to have underpaid.\",")
     ao("    change = \"You overpaid by a small amount, here's your change!\",")
-    ao("    badAddress = \"Use /pay, do not transfer directly from another address!\",")
     ao("    outOfStock = \"We do not have any stock of that item!\",")
     ao("  },")
     ao("  LOGGER = {")
@@ -1096,7 +1110,7 @@ local function grabItems(name,dmg,count)
 end
 
 local function getPages()
-  if custom.itemsDrawnAtOnce == 0 then
+  if custom.itemsDrawnAtOnce == 0 or #sIL == 0 then
     mxPages = 1
   else
     mxPages = math.ceil(#sIL/custom.itemsDrawnAtOnce)
@@ -1132,6 +1146,92 @@ buttons = {
     enabled = false,
   },
 }
+
+local function refreshButtons()
+  buttons.cobble.enabled = custom.touchHereForCobbleButton
+  if custom.compactMode then
+    if custom.drawBottomInfoBar then
+      if buttons.cobble.enabled then
+        buttons.cobble.y1 = mY-2
+        buttons.cobble.y2 = mY-2
+        buttons.cobble.x1 = 16
+        buttons.cobble.content = "Free Cobble ("..cobCount..")"
+        local b = buttons.cobble.content
+        buttons.cobble.x1 = buttons.cobble.x1-b:len()/2-1
+        buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
+        buttons.pgUp.y1 = mY-4
+        buttons.pgUp.y2 = mY-4
+        buttons.pgDwn.y1 = mY-4
+        buttons.pgDwn.y2 = mY-4
+      else
+        buttons.pgUp.y1 = mY-3
+        buttons.pgUp.y2 = mY-3
+        buttons.pgDwn.y1 = mY-3
+        buttons.pgDwn.y2 = mY-3
+      end
+    else
+      if buttons.cobble.enabled then
+        buttons.cobble.y1 = mY
+        buttons.cobble.y2 = mY
+        buttons.cobble.x1 = 16
+        buttons.cobble.content = "Free Cobble ("..cobCount..")"
+        local b = buttons.cobble.content
+        buttons.cobble.x1 = buttons.cobble.x1-b:len()/2-1
+        buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
+        buttons.pgUp.y1 = mY-2
+        buttons.pgUp.y2 = mY-2
+        buttons.pgDwn.y1 = mY-2
+        buttons.pgDwn.y2 = mY-2
+      else
+        buttons.pgUp.y1 = mY
+        buttons.pgUp.y2 = mY
+        buttons.pgDwn.y1 = mY
+        buttons.pgDwn.y2 = mY
+      end
+    end
+  else
+    if buttons.cobble.enabled then
+      if custom.drawBottomInfoBar then
+        buttons.cobble.y1 = mY-7
+        buttons.cobble.y2 = mY-5
+        buttons.cobble.x1 = 29
+        buttons.cobble.content = "Free Cobble ("..cobCount..")"
+        local b = buttons.cobble.content
+        buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
+        buttons.pgUp.y1 = mY-7
+        buttons.pgUp.y2 = mY-5
+        buttons.pgDwn.y1 = mY-7
+        buttons.pgDwn.y2 = mY-5
+      else
+        buttons.cobble.y1 = mY-3
+        buttons.cobble.y2 = mY-1
+        buttons.cobble.x1 = 29
+        buttons.cobble.content = "Free Cobble ("..cobCount..")"
+        local b = buttons.cobble.content
+        buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
+        buttons.pgUp.y1 = mY-3
+        buttons.pgUp.y2 = mY-1
+        buttons.pgDwn.y1 = mY-3
+        buttons.pgDwn.y2 = mY-1
+      end
+    else
+      if custom.drawBottomInfoBar then
+        buttons.pgUp.y1 = mY-7
+        buttons.pgUp.y2 = mY-5
+        buttons.pgDwn.y1 = mY-7
+        buttons.pgDwn.y2 = m-5
+      else
+        buttons.pgUp.y1 = mY-3
+        buttons.pgUp.y2 = mY-1
+        buttons.pgDwn.y1 = mY-3
+        buttons.pgDwn.y2 = mY-1
+      end
+    end
+  end
+
+
+end
+
 local function drawButton(BUTT)
   if BUTT.enabled then
     mon.setBackgroundColor(custom.buttons.bg)
@@ -1176,72 +1276,102 @@ local function square(x1,y1,x2,y2,c)
 end
 
 local function drawBG()
+  local topPad = 3
+  local botPad = 3
+  if custom.compactMode then
+    topPad = 1
+    botPad = 1
+  end
   mon.setBackgroundColor(custom.farthestBackground.bg)
   mon.clear()
-  square(2,4,mX-1,mY-4,custom.background.bg)
-  square(2,1,mX-1,3,custom.nameBar.bg)
-  mon.setCursorPos(mX/2-(custom.shopName:len()/2),2)
+  square(2,topPad+1,mX-1,mY,custom.background.bg)
+  square(2,1,mX-1,topPad,custom.nameBar.bg)
+  mon.setCursorPos(mX/2-(custom.shopName:len()/2),topPad/2+0.5)
   mon.write(custom.shopName)
-  square(2,mY-3,mX-1,mY,custom.infoBar.bg)
-  if not custom.showCustomInfo then
-    local ln1 = "This shop was made by fatmanchummy"
-    local ln2 = "This shop is owned by "..custom.owner
-    mon.setCursorPos(mX/2-(ln1:len()/2),mY-2)
-    mon.write(ln1)
-    mon.setCursorPos(mX/2-(ln2:len()/2),mY-1)
-    mon.write(ln2)
-  else
-    if type(custom.customInfo[1]) == "string" then
-      mon.setCursorPos(mX/2-(custom.customInfo[1]:len()/2),mY-2)
-      mon.write(custom.customInfo[1])
-      if type(custom.customInfo[2]) == "string" then
-        mon.setCursorPos(mX/2-(custom.customInfo[2]:len()/2),mY-1)
-        mon.write(custom.customInfo[2])
+  if custom.drawBottomInfoBar then
+    square(2,mY-botPad,mX-1,mY,custom.infoBar.bg)
+    local ln1y = mY-2
+    local ln2y = mY-1
+    if custom.compactMode then
+      ln1y = mY-1
+      ln2y = mY
+    end
+    if not custom.showCustomInfo then
+      local ln1 = "This shop was made by fatmanchummy"
+      local ln2 = "This shop is owned by "..custom.owner
+      mon.setCursorPos(mX/2-(ln1:len()/2),ln1y)
+      mon.write(ln1)
+      mon.setCursorPos(mX/2-(ln2:len()/2),ln2y)
+      mon.write(ln2)
+    else
+      if type(custom.customInfo[1]) == "string" then
+        mon.setCursorPos(mX/2-(custom.customInfo[1]:len()/2),ln1y)
+        mon.write(custom.customInfo[1])
+        if type(custom.customInfo[2]) == "string" then
+          mon.setCursorPos(mX/2-(custom.customInfo[2]:len()/2),ln2y)
+          mon.write(custom.customInfo[2])
+        end
       end
     end
   end
 end
 
 local function draw(sel,first)
+  refreshButtons()
   local toDraw = custom.itemsDrawnAtOnce
   getPages()
-  square(3,5,mX/2+3,7,custom.itemInfoBar.bg)
+  local skip = 7
+  local infoBarHeight = 7
+  local infoBarBottom = 5
+  local infoBarWords = 6
+  if custom.compactMode then
+    skip = 3
+    infoBarHeight = 3
+    infoBarBottom = 3
+    infoBarWords = 3
+  end
+  square(3,infoBarBottom,mX/2+3,infoBarHeight,custom.itemInfoBar.bg)
   mon.setTextColor(custom.itemInfoBar.fg)
-  mon.setCursorPos(4,6)
+  mon.setCursorPos(4,infoBarWords)
   mon.write("Item")
-  mon.setCursorPos(mX/3-5,6)
+  mon.setCursorPos(mX/3-5,infoBarWords)
   mon.write("Stock")
-  mon.setCursorPos(mX/2-2,6)
+  mon.setCursorPos(mX/2-2,infoBarWords)
   mon.write("Price")
-  square(3,8,mX/2+3,8+toDraw,custom.background.bg)
+  square(3,infoBarHeight+1,mX/2+3,(infoBarHeight+1)+toDraw,custom.background.bg)
   for i = 1,toDraw do
     local cur = i+(toDraw)*(page-1)
     local cur1 = cur
     cur = sIL[cur]
     if cur then
       if cur.count == 0 then
-        square(3,i+7,mX/2+3,i+7,custom.itemTableEmptyStock.bg)
-        mon.setTextColor(custom.itemTableEmptyStock.fg)
+        if i%2 == 1 then
+          square(3,i+skip,mX/2+3,i+skip,custom.itemTableEmptyStock1.bg)
+          mon.setTextColor(custom.itemTableEmptyStock1.fg)
+        else
+          square(3,i+skip,mX/2+3,i+skip,custom.itemTableEmptyStock2.bg)
+          mon.setTextColor(custom.itemTableEmptyStock2.fg)
+        end
       else
         if i%2 == 1 then
-          square(3,i+7,mX/2+3,i+7,custom.itemTableColor1.bg)
+          square(3,i+skip,mX/2+3,i+skip,custom.itemTableColor1.bg)
           mon.setTextColor(custom.itemTableColor1.fg)
         else
-          square(3,i+7,mX/2+3,i+7,custom.itemTableColor2.bg)
+          square(3,i+skip,mX/2+3,i+skip,custom.itemTableColor2.bg)
           mon.setTextColor(custom.itemTableColor2.fg)
         end
       end
-      mon.setCursorPos(4,i+7)
+      mon.setCursorPos(4,i+skip)
       mon.write(cur.display)
-      mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
+      mon.setCursorPos(mX/3-tostring(cur.count):len(),i+skip)
       mon.write(tostring(cur.count))
       local a = tostring(cur.price):find("%.")
-      mon.setCursorPos(mX/2,i+7)
+      mon.setCursorPos(mX/2,i+skip)
       mon.write(".00")
       if a then
-        mon.setCursorPos(mX/2+a-3,i+7)
+        mon.setCursorPos(mX/2+a-3,i+skip)
       else
-        mon.setCursorPos(mX/2-tostring(cur.price):len(),i+7)
+        mon.setCursorPos(mX/2-tostring(cur.price):len(),i+skip)
       end
       mon.write(tostring(cur.price))
     end
@@ -1258,8 +1388,16 @@ local function draw(sel,first)
   end
   drawButton(buttons.pgUp)
   drawButton(buttons.pgDwn)
+  local bigSelStart = 18
+  local bigSelEnd = 25
+  local displStart = 19
+  if custom.compactMode then
+    bigSelStart = 9
+    bigSelEnd = 14
+    displStart = 9
+  end
   if sel then
-    local i = sel-7
+    local i = sel-skip
     selection = i+(page-1)*(toDraw)
     local cur = sIL[selection]
     if cur and i <= toDraw then
@@ -1270,71 +1408,84 @@ local function draw(sel,first)
         square(3,sel,mX/2+3,sel,custom.selection.bg)
         mon.setTextColor(custom.selection.fg)
       end
-      mon.setCursorPos(4,i+7)
+      mon.setCursorPos(4,i+skip)
       mon.write(cur.display)
-      mon.setCursorPos(mX/3-tostring(cur.count):len(),i+7)
+      mon.setCursorPos(mX/3-tostring(cur.count):len(),i+skip)
       mon.write(tostring(cur.count))
       local a = tostring(cur.price):find("%.")
-      mon.setCursorPos(mX/2,i+7)
+      mon.setCursorPos(mX/2,i+skip)
       mon.write(".00")
       if a then
-        mon.setCursorPos(mX/2+a-3,i+7)
+        mon.setCursorPos(mX/2+a-3,i+skip)
       else
-        mon.setCursorPos(mX/2-tostring(cur.price):len(),i+7)
+        mon.setCursorPos(mX/2-tostring(cur.price):len(),i+skip)
       end
       mon.write(tostring(cur.price))
+
       if cur.count == 0 then
-        square(mX/2+5,18,mX-5,25,custom.bigSelectionEmptyStock.bg)
+        square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.bigSelectionEmptyStock.bg)
         mon.setTextColor(custom.bigSelectionEmptyStock.fg)
       else
-        square(mX/2+5,18,mX-5,25,custom.bigSelection.bg)
+        square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.bigSelection.bg)
         mon.setTextColor(custom.bigSelection.fg)
       end
-      mon.setCursorPos(mX/2+6,19)
+      mon.setCursorPos(mX/2+6,displStart)
       mon.write(cur.display)
-      mon.setCursorPos(mX/2+6,20)
+      mon.setCursorPos(mX/2+6,displStart+1)
       mon.write(tostring(cur.price).."KST each")
-      mon.setCursorPos(mX/2+6,21)
+      mon.setCursorPos(mX/2+6,displStart+2)
       mon.write("x"..tostring(cur.count))
-      mon.setCursorPos(mX/2+6,22)
+      mon.setCursorPos(mX/2+6,displStart+3)
       local tPrice = math.ceil(cur.count*cur.price)
       mon.write("Whole stock price: "..tostring(tPrice))
-      mon.setCursorPos(mX/2+6,24)
+      mon.setCursorPos(mX/2+6,displStart+5)
       mon.write("/pay "..pubKey.." "..tPrice)
     else
-      square(mX/2+5,18,mX-5,25,custom.background.bg)
+      square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.background.bg)
     end
   else
-    square(mX/2+5,18,mX-5,25,custom.background.bg)
+    square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.background.bg)
   end
-  square(mX/2+5,8,mX-5,16,custom.bigInfo.bg)
+
+  local bigInfoBegin = 8
+  local bigInfoEnd = 16
+  local inform = 9
+  local bistart = 11
+  if custom.compactMode then
+    bigInfoBegin = 3
+    bigInfoEnd = 7
+    inform = 3
+    bistart = 4
+  end
+
+  square(mX/2+5,bigInfoBegin,mX-5,bigInfoEnd,custom.bigInfo.bg)
   mon.setTextColor(custom.bigInfo.fg)
-  mon.setCursorPos((3*mX)/4-6,9)
+  mon.setCursorPos((3*mX)/4-6,inform)
   mon.write("Information")
   if custom.showCustomBigInfo then
     for i = 1,4 do
       custom.customBigInfo[i] = custom.customBigInfo[i]:gsub("PUBKEY",pubKey)
     end
-    mon.setCursorPos((3*mX)/4-custom.customBigInfo[1]:len()/2,11)
+    mon.setCursorPos((3*mX)/4-custom.customBigInfo[1]:len()/2,bistart)
     mon.write(custom.customBigInfo[1])
-    mon.setCursorPos((3*mX)/4-custom.customBigInfo[2]:len()/2,12)
+    mon.setCursorPos((3*mX)/4-custom.customBigInfo[2]:len()/2,bistart+1)
     mon.write(custom.customBigInfo[2])
-    mon.setCursorPos((3*mX)/4-custom.customBigInfo[3]:len()/2,13)
+    mon.setCursorPos((3*mX)/4-custom.customBigInfo[3]:len()/2,bistart+2)
     mon.write(custom.customBigInfo[3])
-    mon.setCursorPos((3*mX)/4-custom.customBigInfo[4]:len()/2,14)
+    mon.setCursorPos((3*mX)/4-custom.customBigInfo[4]:len()/2,bistart+3)
     mon.write(custom.customBigInfo[4])
   else
     local ln1 = "This shop's address is:"
     local ln2 = pubKey
     local ln3 = "Send Krist to this address after"
     local ln4 = "selecting an item to buy."
-    mon.setCursorPos((3*mX)/4-ln1:len()/2,11)
+    mon.setCursorPos((3*mX)/4-ln1:len()/2,bistart)
     mon.write(ln1)
-    mon.setCursorPos((3*mX)/4-ln2:len()/2,12)
+    mon.setCursorPos((3*mX)/4-ln2:len()/2,bistart+1)
     mon.write(ln2)
-    mon.setCursorPos((3*mX)/4-ln3:len()/2,13)
+    mon.setCursorPos((3*mX)/4-ln3:len()/2,bistart+2)
     mon.write(ln3)
-    mon.setCursorPos((3*mX)/4-ln4:len()/2,14)
+    mon.setCursorPos((3*mX)/4-ln4:len()/2,bistart+3)
     mon.write(ln4)
   end
   if custom.touchHereForCobbleButton then
@@ -1361,6 +1512,7 @@ end)
 
 jua.on("monitor_resize",function()
   mX,mY = mon.getSize()
+  refreshButtons()
   drawBG()
   draw()
 end)
@@ -1372,7 +1524,7 @@ jua.on("monitor_touch",function(nm,side,x,y)
     rPressTimer = os.startTimer(30)
     local pressed = whichPress(x,y)
     local max = #sIL
-    if inBetween(3,8,mX/2+3,8+custom.itemsDrawnAtOnce,x,y) then
+    if inBetween(3,1,mX/2+3,mY,x,y) then
       draw(y)
     end
     if pressed == "pgUp" then
