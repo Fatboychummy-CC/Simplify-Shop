@@ -1,11 +1,11 @@
 --[[
-1.3
-no
-Push to test the updater again
+1.4
+REQUIRED
+Fixed a small thing (forgot to close a handle), and added a few minor visual details
 Logger, designed for Krist Shops.  You may edit and reuse this to your heart's content.
 ]]
 
-logVersion = 1.3
+logVersion = 1.4
 local custom = false
 
 local LOG_LOCATION = false
@@ -94,6 +94,13 @@ function isUpdate()
   handle.readLine()
   local v = tonumber(handle.readLine())
   handle.close()
+  if v < logVersion then
+    print("LOGGER:",logVersion,">",v)
+  elseif v > logVersion then
+    print("LOGGER:",logVersion,"<",v)
+  else
+    print("LOGGER:",logVersion,"=",v)
+  end
   return v > logVersion
 end
 function update()
@@ -103,6 +110,7 @@ function update()
   local v = tonumber(h1.readLine())
   local required = h1.readLine()
   local notes = h1.readLine()
+  h1.close()
   local doUpdate = false
   if required == "REQUIRED" then
     doUpdate = true
@@ -116,7 +124,7 @@ function update()
     print("-----------------")
     print(notes)
     print("-----------------")
-    print("Would you like to update now?")
+    print("Would you like to update now? (y/n)")
     local utm = os.startTimer(30)
     while true do
       local a = {os.pullEvent()}
