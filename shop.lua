@@ -1,6 +1,6 @@
 --[[
-1.5
-COMPACT MODE IS HERE!  The shop now can be run on monitors which are 1 or 2 blocks high (though it works best with 2).  I also added a second "itemTableEmptyStock" in the fatShopCustomization file for use with multi-color item listing.
+1.51
+Shulker-box support.  Who knew it'd be so simple?
 ]]
 
 --[[
@@ -9,7 +9,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 1.5
+local version = 1.51
 local tArgs = {...}
 
 
@@ -990,7 +990,7 @@ local function refreshChests()
   if not custom.useSingleChest or custom.useBothChestTypes then
     local allPs = peripheral.getNames()
       for i = 1,#allPs do
-        if allPs[i]:find("chest") then
+        if allPs[i]:find("chest") or allPs[i]:find("shulker") then
           table.insert(chests,allPs[i])
         end
       end
