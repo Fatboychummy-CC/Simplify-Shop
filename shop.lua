@@ -1,14 +1,15 @@
 --[[
-1.51
-Shulker-box support.  Who knew it'd be so simple?
-]]
+2
+Added auto-completion, and the visual editor! Get to it by running "<programName> setupVisuals"
 
---[[
+
     SIMPLIFY Shop
 made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
+local version = 2
+local tArgs = {...}
 
 local params = {
   "setupText",
@@ -30,14 +31,6 @@ end
 )
 
 
-
-
-
-
-
-
-local version = 1.51
-local tArgs = {...}
 
 
 if not fs.exists("w.lua") then
