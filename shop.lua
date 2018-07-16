@@ -9,6 +9,33 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
+
+local params = {
+  "setupText",
+  "setupVisuals",
+}
+shell.setCompletionFunction(shell.getRunningProgram(),
+function(shell,par,cur)
+  if par == 1 then
+    local res = {}
+    for i = 1,#params do
+      if params[i]:sub(1,#cur) == cur then
+        res[#res+1] = params[i]:sub(#cur+1)
+      end
+    end
+    return res
+  end
+  return {}
+end
+)
+
+
+
+
+
+
+
+
 local version = 1.51
 local tArgs = {...}
 
@@ -412,7 +439,7 @@ end
 
 
 
-if tArgs[1] == "setup" then
+if tArgs[1] == "setupText" then
   logger.info("Entering setup.")
   sleep(3)
   term.clear()
@@ -642,6 +669,7 @@ if tArgs[1] == "setup" then
 
   fixCustomization()
 end
+
 
 
 
@@ -1287,9 +1315,11 @@ local function drawBG()
   square(2,topPad+1,mX-1,mY,custom.background.bg)
   square(2,1,mX-1,topPad,custom.nameBar.bg)
   mon.setCursorPos(mX/2-(custom.shopName:len()/2),topPad/2+0.5)
+  mon.setTextColor(custom.nameBar.fg)
   mon.write(custom.shopName)
   if custom.drawBottomInfoBar then
     square(2,mY-botPad,mX-1,mY,custom.infoBar.bg)
+    mon.setTextColor(custom.infoBar.fg)
     local ln1y = mY-2
     local ln2y = mY-1
     if custom.compactMode then
@@ -1493,6 +1523,271 @@ local function draw(sel,first)
     drawButton(buttons.cobble)
   end
 end
+
+
+if true then
+
+  local selection = false
+  local s2 = false
+
+  local oCT = {
+    [1] = {color = colors.pink,x = mX/2-11,y = 4,y2 = 12,},
+    [2] = {color = colors.magenta,x = mX/2-8,y = 4,y2 = 12,},
+    [3] = {color = colors.purple,x = mX/2-5,y = 4,y2 = 12,},
+    [4] = {color = colors.lightBlue,x = mX/2-2,y = 4,y2 = 12,},
+    [5] = {color = colors.cyan,x = mX/2+1,y = 4,y2 = 12,},
+    [6] = {color = colors.blue,x = mX/2+4,y = 4,y2 = 12,},
+    [7] = {color = colors.green,x = mX/2+7,y = 4,y2 = 12,},
+    [8] = {color = colors.lime,x = mX/2+10,y = 4,y2 = 12,},
+    [9] = {color = colors.yellow,x = mX/2-11,y = 7,y2 = 15,},
+    [10] = {color = colors.orange,x = mX/2-8,y = 7,y2 = 15,},
+    [11] = {color = colors.red,x = mX/2-5,y = 7,y2 = 15,},
+    [12] = {color = colors.brown,x = mX/2-2,y = 7,y2 = 15,},
+    [13] = {color = colors.white,x = mX/2+1,y = 7,y2 = 15,},
+    [14] = {color = colors.lightGray,x = mX/2+4,y = 7,y2 = 15,},
+    [15] = {color = colors.gray,x = mX/2+7,y = 7,y2 = 15,},
+    [16] = {color = colors.black,x = mX/2+10,y = 7,y2 = 15,},
+    cancel = {color = colors.blue,y1=mY/2+4,y2=mY/2+6,contain = "cancel",},
+  }
+
+  local function getColorPress(x,y,selected)
+    local y1 = oCT[1].y
+    local y2 = oCT[9].y
+    local yy1 = oCT[1].y2
+    local yy2 = oCT[9].y2
+    if type(selected) == "table" then
+      if type(selected.bg) == "number" then
+        for i = 1,8 do
+          if inBetween(oCT[i].x,y1,oCT[i].x+1,y1+1,x,y) then
+            return i,1
+          end
+        end
+        for i = 9,16 do
+          if inBetween(oCT[i].x,y2,oCT[i].x+1,y2+1,x,y) then
+            return i,1
+          end
+        end
+      end
+      --------------------
+      if type(selected.fg) == "number" then
+        for i = 1,8 do
+          if inBetween(oCT[i].x,yy1,oCT[i].x+1,yy1+1,x,y) then
+            return i,2
+          end
+        end
+        for i = 9,16 do
+          if inBetween(oCT[i].x,yy2,oCT[i].x+1,yy2+1,x,y) then
+            return i,2
+          end
+        end
+      end
+    end
+    if inBetween(mX/2-oCT.cancel.contain:len()/2-1.5,mY/2+4,mX/2+oCT.cancel.contain:len()/2+0.5,mY/2+6,x,y) then
+      selection = false
+    end
+  end
+
+  local function drawColorBox(colorBox,iter)
+    local iterD = "y"
+    if iter ~= 1 then
+      iterD = "y2"
+    end
+    mon.setBackgroundColor(colorBox.color)
+    mon.setCursorPos(colorBox.x,colorBox[iterD])
+    mon.write("  ")
+    mon.setCursorPos(colorBox.x,colorBox[iterD]+1)
+    mon.write("  ")
+  end
+
+  local function drawBoxColors2(writ,selected)
+    square(mX/2-11.5,11,mX/2+12.5,17,colors.black)
+    mon.setCursorPos(mX/2-writ:len()/2+0.5,11)
+    mon.setTextColor(colors.white)
+    mon.write(writ)
+    for i = 1,16 do
+      drawColorBox(oCT[i],2)
+    end
+--[[    local a1 = "!exampleText :D!"
+    local a2 =   "More example"
+    square(mX/2-a1:len()/2-0.5,19,mX/2+a1:len()/2+0.5,22,selected.bg)
+    mon.setCursorPos(mX/2-a1:len()/2+0.5,20)
+    mon.setTextColor(selected.fg)
+    mon.write(a1)
+    mon.setCursorPos(mX/2-a2:len()/2+0.5,21)
+    mon.write(a2)]]
+  end
+
+  local function drawBoxColors1(writ,selected)
+    square(mX/2-11.5,3,mX/2+12.5,9,colors.black)
+    mon.setCursorPos(mX/2-writ:len()/2+0.5,3)
+
+    mon.setTextColor(colors.white)
+    mon.write(writ)
+
+    for i = 1,16 do
+      drawColorBox(oCT[i],1)
+    end
+  end
+
+
+  local function drawColors(selected)
+    if type(selected) == "table" then
+      drawBoxColors1("BACKGROUND",selected)
+      if selected.fg then
+        drawBoxColors2("TEXT",selected)
+      end
+    end
+    mon.setBackgroundColor(colors.blue)
+    if selected ~= nil and type(selected) ~= "boolean" then
+      for i = 1,3 do
+        mon.setCursorPos(mX/2-oCT.cancel.contain:len()/2-1.5,mY/2+3+i)
+        mon.write(string.rep(" ",oCT.cancel.contain:len()+2))
+      end
+      mon.setCursorPos(mX/2-oCT.cancel.contain:len()/2-0.5,mY/2+5)
+      mon.write(oCT.cancel.contain)
+    end
+  end
+
+
+  local function select(x,y)
+    if x == 1 or x == mX then
+      selection = custom.farthestBackground
+      s2 = "farthestBackground"
+    elseif inBetween(2,1,mX-1,3,x,y) then
+      selection = custom.nameBar
+      s2 = "nameBar"
+    elseif inBetween(2,mY-3,mX-1,mY,x,y) then
+      selection = custom.infoBar
+      s2 = "infoBar"
+    elseif inBetween(3,5,mX/2+3,7,x,y) then
+      selection = custom.itemInfoBar
+      s2 = "itemInfoBar"
+    elseif inBetween(3,8,mX/2+3,8,x,y) then
+      selection = custom.itemTableColor1
+      s2 = "itemTableColor1"
+    elseif inBetween(3,9,mX/2+3,9,x,y) then
+      selection = custom.itemTableColor2
+      s2 = "itemTableColor2"
+    elseif inBetween(3,10,mX/2+3,10,x,y) then
+      selection = custom.selection
+      s2 = "selection"
+    elseif inBetween(3,11,mX/2+3,11,x,y) then
+      selection = custom.itemTableEmptyStock2
+      s2 = "itemTableEmptyStock2"
+    elseif inBetween(3,12,mX/2+3,12,x,y) then
+      selection = custom.itemTableEmptyStock1
+      s2 = "itemTableEmptyStock1"
+    elseif inBetween(mX/2+5,18,mX-5,25,x,y) then
+      selection = custom.bigSelection
+      s2 = "bigSelection"
+    elseif inBetween(mX/2+5,8,mX-5,16,x,y) then
+      selection = custom.bigInfo
+      s2 = "bigInfo"
+    elseif inBetween(29,mY-7,41,mY-5,x,y) then
+      selection = custom.buttons
+      s2 = "buttons"
+    elseif inBetween(17,mY-7,27,mY-5,x,y) or inBetween(5,mY-7,15,mY-5,x,y) then
+      selection = custom.disabledButtons
+      s2 = "disabledButtons"
+    elseif inBetween(2,4,mX-1,mY-4,x,y) then--FINAL ELSEIF
+      selection = custom.background
+      s2 = "background"
+    end
+  end
+
+
+  if tArgs[1] == "setupVisuals" then
+    custom = dofile(fatCustomization)
+    custom.touchHereForCobbleButton = true
+    local oldCompact = custom.compactMode
+    local oldName = custom.shopName
+    custom.compactMode = false
+    custom.shopName = "Tap somewhere to change it's colors!"
+    sIL = {
+      {
+        display = "Item List 1",
+        find = "minecraft:cobblestone",
+        damage = 0,
+        price = 1.5,
+        count = 100,
+      },
+      {
+        display = "Item List 2",
+        find = "minecraft:iron_ingot",
+        damage = 0,
+        price = 0.5,
+        count = 5,
+      },
+      {
+        display = "Selected Item",
+        find = "minecraft:logs",
+        damage = 0,
+        price = 0.01,
+        count = 9999,
+      },
+      {
+        display = "Empty Stock Item 2",
+        find = "minecraft:fuck",
+        damage = 0,
+        price = 100,
+        count = 0,
+      },
+      {
+        display = "Empty Stock Item 1",
+        find = "minecraft:empty",
+        damage = 0,
+        price = 1000,
+        count = 0,
+      },
+    }
+    drawBG()
+    draw(10)
+    term.clear()
+    term.setCursorPos(1,1)
+    logger.info("Entering Visual Setup")
+    print("Press the \"t\" key to exit.")
+    print("This may not support smaller screens.")
+    while true do
+      drawBG()
+      draw(10)
+      drawColors(selection)
+      local event = ({os.pullEvent()})
+      if event[1] == "key" and event[2] == keys.t then
+        mon.setBackgroundColor(custom.farthestBackground.bg)
+        mon.clear()
+        mon.setTextColor(custom.background.fg)
+        mon.setTextScale(2)
+        mon.setCursorPos(1,1)
+        mon.write("Exiting customization.")
+        break
+      end
+      if selection then
+        if event[1] == "monitor_touch" then
+          local index, bfg = getColorPress(event[3],event[4],selection)
+          if index ~= nil then
+            if bfg == 1 then
+              custom[s2].bg = oCT[index].color
+            elseif bfg == 2 then
+              custom[s2].fg = oCT[index].color
+            end
+          end
+        end
+      else
+        if event[1] == "monitor_touch" then
+          select(event[3],event[4])
+        end
+      end
+
+    end
+    logger.info("Done, saving settings.")
+    custom.shopName = oldName
+    fixCustomization()
+    return 1
+  end
+end
+
+
+
 
 -------------BEGIN-------------
 checkAllTheThings()
