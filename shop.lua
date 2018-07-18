@@ -1240,7 +1240,7 @@ local function refreshButtons()
         buttons.pgUp.y1 = mY-7
         buttons.pgUp.y2 = mY-5
         buttons.pgDwn.y1 = mY-7
-        buttons.pgDwn.y2 = m-5
+        buttons.pgDwn.y2 = mY-5
       else
         buttons.pgUp.y1 = mY-3
         buttons.pgUp.y2 = mY-1
