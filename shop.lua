@@ -1,5 +1,5 @@
 --[[
-2
+2.01
 Added auto-completion, and the visual editor! Get to it by running "<programName> setupVisuals"
 
 
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 2
+local version = 2.01
 local tArgs = {...}
 
 local params = {
