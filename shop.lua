@@ -1,6 +1,6 @@
 --[[
 2.01
-Added auto-completion, and the visual editor! Get to it by running "<programName> setupVisuals"
+Fixed crash with undefined `m` variable on line 1243
 
 
     SIMPLIFY Shop
