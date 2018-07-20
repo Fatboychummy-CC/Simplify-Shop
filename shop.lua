@@ -1,6 +1,6 @@
 --[[
-2.01
-Fixed crash with undefined `m` variable on line 1243
+2.1
+Reworked a major portion of how the shop works.  It now updates the screen more often, and has a sort of "heartbeat". Blue dot: Purchase. Red dot: Redraw the screen.
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 2.01
+local version = 2.1
 local tArgs = {...}
 
 local params = {
@@ -159,6 +159,8 @@ local custom = {}
 local chests = {}
 local sIL = {}
 local selection = false
+local recentPressCount = 0
+local oldY = 0
 local page = 1
 local mxPages = 1
 local mX = 0
@@ -166,9 +168,8 @@ local mY = 0
 local ws
 local buttons = {}
 local recentPress = false
-local rPressTimer = "nothing to see yet"
+local purchaseTimer = "nothing to see yet"
 local cobCount = 0
-
 
 
 local function fixCustomization(key)
@@ -385,6 +386,7 @@ local function fixCustomization(key)
       ao(custom.REFUNDS.underpay and "    underpay = \""..custom.REFUNDS.underpay .."\"," or "    underpay = \"You seem to have underpaid.\",")
       ao(custom.REFUNDS.change and "    change = \""..custom.REFUNDS.change .."\"," or "    change = \"You overpaid by a small amount, here's your change!\",")
       ao(custom.REFUNDS.outOfStock and "    outOfStock = \""..custom.REFUNDS.outOfStock .."\"," or "    outOfStock = \"We do not have any stock of that item!\",")
+      ao(custom.REFUNDS.UPDATE and "    UPDATE = \""..custom.REFUNDS.UPDATE.."\"," or "    UPDATE = \"The shop is updating it's stocks and an error occured!\",")
     else
       ao("    noItemSelected = \"There is no item selected!\",")
       ao("    underpay = \"You seem to have underpaid.\",")
@@ -895,6 +897,7 @@ local function writeCustomization(name)
     ao("    underpay = \"You seem to have underpaid.\",")
     ao("    change = \"You overpaid by a small amount, here's your change!\",")
     ao("    outOfStock = \"We do not have any stock of that item!\",")
+    ao("    UPDATE = \"The shop is updating it's stocks and an error occured!\",")
     ao("  },")
     ao("  LOGGER = {")
     ao("    doNormalLogging = false, --If you are getting errors, set this to true.  It tends to spam files.")
@@ -1029,10 +1032,23 @@ local function refreshChests()
     end
 end
 
+local function recursiveCopy(from,to)
+  for k,v in pairs(from) do
+    if type(v) == "table" then
+      to[k] = {}
+      recursiveCopy(from[k],to[k])
+    else
+      to[k] = v
+    end
+  end
+end
+
 local function refreshItems()
   refreshChests()
-  for i = 1,#sIL do
-    sIL[i].count = 0
+  local sIL2 = {}
+  recursiveCopy(sIL,sIL2)
+  for i = 1,#sIL2 do
+    sIL2[i].count = 0
   end
   cobCount = 0
   for i = 1,#chests do
@@ -1043,9 +1059,9 @@ local function refreshItems()
       local cInv = cChest.list()
       for o = 1,cChest.size() do
         if cInv[o] then
-          for p = 1,#sIL do
-            if cInv[o].name == sIL[p].find and cInv[o].damage == sIL[p].damage then
-              sIL[p].count = sIL[p].count + cInv[o].count
+          for p = 1,#sIL2 do
+            if cInv[o].name == sIL2[p].find and cInv[o].damage == sIL2[p].damage then
+              sIL2[p].count = sIL2[p].count + cInv[o].count
             end
           end
           if custom.touchHereForCobbleButton and cInv[o].name == "minecraft:cobblestone" and cInv[o].damage == 0 then
@@ -1058,6 +1074,7 @@ local function refreshItems()
   buttons.cobble.content = "Free Cobble ("..cobCount..")"
   local b = buttons.cobble.content
   buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
+  return sIL2
 end
 
 
@@ -1340,6 +1357,7 @@ local function drawBG()
 end
 
 local function draw(sel,first)
+  oldY = sel
   refreshButtons()
   local toDraw = custom.itemsDrawnAtOnce
   getPages()
@@ -1461,6 +1479,10 @@ local function draw(sel,first)
       mon.setCursorPos(mX/2+6,displStart+3)
       local tPrice = math.ceil(cur.count*cur.price)
       mon.write("Whole stock price: "..tostring(tPrice))
+      if cur.price < 1 then
+        mon.setCursorPos(mX/2+6,displStart+4)
+        mon.write("Items for 1 KST: "..tostring(math.floor(1/cur.price+0.5)))
+      end
       mon.setCursorPos(mX/2+6,displStart+5)
       mon.write("/pay "..pubKey.." "..tPrice)
     else
@@ -1785,47 +1807,9 @@ end
 -------------BEGIN-------------
 checkAllTheThings()
 sortItems()
-refreshItems()
+sIL = refreshItems()
 drawBG()
 
-jua.on("timer",function(evt,tmr)
-  if tmr == rPressTimer then
-    recentPress = false
-    logger.info("30 second timer expired.")
-    selection = false
-    refreshItems()
-    draw()
-  end
-end)
-
-jua.on("monitor_resize",function()
-  mX,mY = mon.getSize()
-  refreshButtons()
-  drawBG()
-  draw()
-end)
-
-jua.on("monitor_touch",function(nm,side,x,y)
-  if side == mName then
-    logger.info("Started 30 second timer, there was a touch to the monitor.")
-    recentPress = true
-    rPressTimer = os.startTimer(30)
-    local pressed = whichPress(x,y)
-    local max = #sIL
-    if inBetween(3,1,mX/2+3,mY,x,y) then
-      draw(y)
-    end
-    if pressed == "pgUp" then
-      page = page + 1
-      draw()
-    elseif pressed == "pgDwn" then
-      page = page - 1
-      draw()
-    elseif pressed == "cobble" then
-      grabItems("minecraft:cobblestone",0,64)
-    end
-  end
-end)
 
 
 local function writeLine(txt)
@@ -1845,14 +1829,164 @@ end
 
 
 
-local function mainJua()
-  jua.setInterval(function()
-    logger.info("Redraw")
-    if not recentPress then
-      refreshItems()
+
+
+
+local function doPurchase(data,updoot)
+  local tx = data.transaction or json.
+  --if tx.from ~= pubKey then
+  logger.info("Payment to: "..tx.to.." (we are "..pubKey..")")
+  local meta = nil
+  if tx.metadata then
+    meta = k.parseMeta(tx.metadata)
+  end
+  if not meta or not meta.meta or not meta.meta["return"] then
+    returnTo = tx.from
+  else
+    returnTo = meta.meta["return"]
+  end
+  if selection and tx.to == pubKey then
+    logger.info("Payment being processed.")
+    local item = sIL[selection]
+    if item.count > 0 then
+      local paid = tx.value
+      local items_required = math.floor(paid/item.price)
+      local items_grabbed = grabItems(item.find,item.damage,items_required)
+      if items_grabbed > 0 then
+        logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid)
+      end
+      local over = paid%item.price
+      local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
+      if item.price > paid then
+        refund(returnTo,tx.value,custom.REFUNDS.underpay)
+      else
+        if refundAmt > 0 then
+          refund(returnTo,refundAmt,custom.REFUNDS.change)
+          logger.purchase("Sent refund of "..refundAmt.." due to overpay.")
+        end
+      end
+    else
+      if updoot then
+        refund(returnTo,tx.value,custom.REFUNDS.UPDATE)
+        logger.purchase("Sent refund of "..tx.value.."due to UPDATING_STOCKS")
+      else
+        refund(returnTo,tx.value,custom.REFUNDS.outOfStock)
+        logger.purchase("Sent refund of "..tx.value.." due to not having the item selected.")
+      end
+    end
+  else
+    if tx.to == pubKey then
+      logger.purchase("No item selected, but we were payed!  Returning...")
+      if returnTo then
+        refund(returnTo,tx.value,custom.REFUNDS.noItemSelected)
+      end
+    end
+  end
+end
+
+
+local function redraw()
+  logger.info("Redraw")
+  mon.setCursorPos(1,1)
+  mon.setBackgroundColor(custom.farthestBackground.bg ~= colors.red and colors.red or colors.blue)
+  mon.write(" ")
+  parallel.waitForAll(
+  function()
+    sIL = refreshItems()
+    if recentPressCount == 0 then selection = false recentPress = false oldY = false end
+    if recentPress then
+      draw(oldY)
+      recentPressCount = recentPressCount - 1
+    else
       draw()
     end
-  end,30)
+  end,
+  function()
+    local cancelT = os.startTimer(5)
+    while true do
+      local event = {os.pullEvent()}
+      if event[1] == "websocket_message" then
+        event[3] = json.decode(event[3])
+        if event[3].type == "event" and event[3].event == "transaction" then
+          doPurchase(event[3],true)
+        end
+        mon.setCursorPos(1,2)
+        mon.setBackgroundColor(custom.farthestBackground.bg ~= colors.blue and colors.blue or colors.red)
+        mon.write(" ")
+        purchaseTimer = os.startTimer(3)
+        break
+      elseif event[1] == "timer" and event[2] == cancelT then
+        break
+      end
+    end
+  end--[[,
+  function()
+    local cancelT = os.startTimer(6)
+    local canCancel = true
+    while true do
+      print("begin event")
+      local event = {os.pullEvent()}
+      if event[1] == "job_started" then
+        canCancel = false
+      elseif event[1] == "job_complete" then
+        print("complete")
+        break
+      elseif event[1] == "timer" and event[2] == cancelT then
+        if canCancel then
+          os.queueEvent("kill")
+          break
+        else
+          cancelT = os.startTimer(2)
+        end
+      end
+    end
+  end]]
+  )
+  mon.setBackgroundColor(custom.farthestBackground.bg)
+  mon.setCursorPos(1,1)
+  mon.write(" ")
+end
+
+
+
+
+local function mainJua()
+  jua.on("timer",function(evt,tmr)
+    if tmr == purchaseTimer then
+      mon.setCursorPos(1,2)
+      mon.setBackgroundColor(custom.farthestBackground.bg)
+      mon.write(" ")
+    end
+  end)
+
+
+  jua.on("monitor_resize",function()
+    mX,mY = mon.getSize()
+    refreshButtons()
+    drawBG()
+    draw()
+  end)
+
+  jua.on("monitor_touch",function(nm,side,x,y)
+    if side == mName then
+      recentPress = true
+      recentPressCount = 3
+      local pressed = whichPress(x,y)
+      local max = #sIL
+      if inBetween(3,1,mX/2+3,mY,x,y) then
+        draw(y)
+      end
+      if pressed == "pgUp" then
+        page = page + 1
+        draw()
+      elseif pressed == "pgDwn" then
+        page = page - 1
+        draw()
+      elseif pressed == "cobble" then
+        grabItems("minecraft:cobblestone",0,64)
+      end
+    end
+  end)
 
   jua.on("terminate",function()
     if ws then ws.close() end
@@ -1876,50 +2010,11 @@ local function mainJua()
       ws.on("hello",function(data)
         logger.info("MOTD: "..data.motd)
         local success = await(ws.subscribe,"transactions",function(data)
-          local tx = data.transaction
-          --if tx.from ~= pubKey then
-          logger.info("Payment to: "..tx.to.." (we are "..pubKey..")")
-          local meta = nil
-          if tx.metadata then
-            meta = k.parseMeta(tx.metadata)
-          end
-          if not meta or not meta.meta or not meta.meta["return"] then
-            returnTo = tx.from
-          else
-            returnTo = meta.meta["return"]
-          end
-          if selection and tx.to == pubKey then
-            logger.info("Payment being processed.")
-            local item = sIL[selection]
-            if item.count > 0 then
-              local paid = tx.value
-              local items_required = math.floor(paid/item.price)
-              local items_grabbed = grabItems(item.find,item.damage,items_required)
-              if items_grabbed > 0 then
-                logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid)
-              end
-              local over = paid%item.price
-              local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
-              if item.price > paid then
-                refund(returnTo,tx.value,custom.REFUNDS.underpay)
-              else
-                if refundAmt > 0 then
-                  refund(returnTo,refundAmt,custom.REFUNDS.change)
-                  logger.purchase("Sent refund of "..refundAmt.." due to overpay.")
-                end
-              end
-            else
-              refund(returnTo,tx.value,custom.REFUNDS.outOfStock)
-              logger.purchase("Sent refund of "..tx.value.." due to not having the item selected.")
-            end
-          else
-            if tx.to == pubKey then
-              logger.purchase("No item selected, but we were payed!  Returning...")
-              if returnTo then
-                refund(returnTo,tx.value,custom.REFUNDS.noItemSelected)
-              end
-            end
-          end
+          doPurchase(data)
+          mon.setCursorPos(1,2)
+          mon.setBackgroundColor(custom.farthestBackground.bg ~= colors.blue and colors.blue or colors.red)
+          mon.write(" ")
+          purchaseTimer = os.startTimer(3)
         end)
         logger.ree()
         if success then
@@ -1941,10 +2036,22 @@ end
 --------------------------
 
 
-
-
-local suc,err = pcall(mainJua)
-
+local suc = true
+local err = "none"
+local function bego()
+  suc,err = pcall(mainJua)
+end
+parallel.waitForAny(bego,function()
+  redraw()
+  local tim = os.startTimer(10)
+  while true do
+    local event = {os.pullEvent("timer")}
+    if event[2] == tim then
+      redraw()
+      tim = os.startTimer(10)
+    end
+  end
+end)
 if not suc then
   logger.severe(err)
   bsod(err)
