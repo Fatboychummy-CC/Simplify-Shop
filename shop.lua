@@ -1,6 +1,6 @@
 --[[
-2.1
-Reworked a major portion of how the shop works.  It now updates the screen more often, and has a sort of "heartbeat". Blue dot: Purchase. Red dot: Redraw the screen.
+2.101
+Fixed a few small bugs in "setupVisuals".  It now no longer forces the cobblestone button on, and the cancel button's touch-detection was fixed.
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 2.1
+local version = 2.101
 local tArgs = {...}
 
 local params = {
@@ -1356,7 +1356,7 @@ local function drawBG()
   end
 end
 
-local function draw(sel,first)
+local function draw(sel,override)
   oldY = sel
   refreshButtons()
   local toDraw = custom.itemsDrawnAtOnce
@@ -1417,15 +1417,17 @@ local function draw(sel,first)
       mon.write(tostring(cur.price))
     end
   end
-  if page == mxPages then
-    buttons.pgUp.enabled = false
-  else
-    buttons.pgUp.enabled = true
-  end
-  if page == 1 then
-    buttons.pgDwn.enabled = false
-  else
-    buttons.pgDwn.enabled = true
+  if not override then
+    if page == mxPages then
+      buttons.pgUp.enabled = false
+    else
+      buttons.pgUp.enabled = true
+    end
+    if page == 1 then
+      buttons.pgDwn.enabled = false
+    else
+      buttons.pgDwn.enabled = true
+    end
   end
   drawButton(buttons.pgUp)
   drawButton(buttons.pgDwn)
@@ -1597,7 +1599,7 @@ if true then
         end
       end
     end
-    if inBetween(mX/2-oCT.cancel.contain:len()/2-1.5,mY/2+4,mX/2+oCT.cancel.contain:len()/2+0.5,mY/2+6,x,y) then
+    if inBetween(mX/2-oCT.cancel.contain:len()/2-2.5,mY/2+4,mX/2+oCT.cancel.contain:len()/2-0.5,mY/2+6,x,y) then
       selection = false
     end
   end
@@ -1698,12 +1700,12 @@ if true then
     elseif inBetween(mX/2+5,8,mX-5,16,x,y) then
       selection = custom.bigInfo
       s2 = "bigInfo"
-    elseif inBetween(29,mY-7,41,mY-5,x,y) then
-      selection = custom.buttons
-      s2 = "buttons"
-    elseif inBetween(17,mY-7,27,mY-5,x,y) or inBetween(5,mY-7,15,mY-5,x,y) then
+    elseif inBetween(5,mY-7,15,mY-5,x,y) then
       selection = custom.disabledButtons
       s2 = "disabledButtons"
+    elseif inBetween(17,mY-7,27,mY-5,x,y)  then
+      selection = custom.buttons
+      s2 = "buttons"
     elseif inBetween(2,4,mX-1,mY-4,x,y) then--FINAL ELSEIF
       selection = custom.background
       s2 = "background"
@@ -1713,11 +1715,16 @@ if true then
 
   if tArgs[1] == "setupVisuals" then
     custom = dofile(fatCustomization)
-    custom.touchHereForCobbleButton = true
+    local oldCobble = custom.touchHereForCobbleButton
     local oldCompact = custom.compactMode
     local oldName = custom.shopName
+    custom.touchHereForCobbleButton = false
     custom.compactMode = false
     custom.shopName = "Tap somewhere to change it's colors!"
+    buttons.pgUp.content = "Enabled"
+    buttons.pgUp.enabled = true
+    buttons.pgDwn.content = "Disabled"
+    buttons.pgDwn.enabled = false
     sIL = {
       {
         display = "Item List 1",
@@ -1756,7 +1763,7 @@ if true then
       },
     }
     drawBG()
-    draw(10)
+    draw(10,true)
     term.clear()
     term.setCursorPos(1,1)
     logger.info("Entering Visual Setup")
@@ -1764,7 +1771,7 @@ if true then
     print("This may not support smaller screens.")
     while true do
       drawBG()
-      draw(10)
+      draw(10,true)
       drawColors(selection)
       local event = ({os.pullEvent()})
       if event[1] == "key" and event[2] == keys.t then
@@ -1795,7 +1802,9 @@ if true then
 
     end
     logger.info("Done, saving settings.")
+    custom.touchHereForCobbleButton = oldCobble
     custom.shopName = oldName
+    custom.compactMode = oldCompact
     fixCustomization()
     return 1
   end
