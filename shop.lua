@@ -1,6 +1,6 @@
 --[[
-2.101
-Fixed a few small bugs in "setupVisuals".  It now no longer forces the cobblestone button on, and the cancel button's touch-detection was fixed.
+2.102
+Urgent upgrade which fixes a bug where players can get double the amount of items for the price of half!
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 2.101
+local version = 2.102
 local tArgs = {...}
 
 local params = {
@@ -1909,48 +1909,7 @@ local function redraw()
     else
       draw()
     end
-  end,
-  function()
-    local cancelT = os.startTimer(5)
-    while true do
-      local event = {os.pullEvent()}
-      if event[1] == "websocket_message" then
-        event[3] = json.decode(event[3])
-        if event[3].type == "event" and event[3].event == "transaction" then
-          doPurchase(event[3],true)
-        end
-        mon.setCursorPos(1,2)
-        mon.setBackgroundColor(custom.farthestBackground.bg ~= colors.blue and colors.blue or colors.red)
-        mon.write(" ")
-        purchaseTimer = os.startTimer(3)
-        break
-      elseif event[1] == "timer" and event[2] == cancelT then
-        break
-      end
-    end
-  end--[[,
-  function()
-    local cancelT = os.startTimer(6)
-    local canCancel = true
-    while true do
-      print("begin event")
-      local event = {os.pullEvent()}
-      if event[1] == "job_started" then
-        canCancel = false
-      elseif event[1] == "job_complete" then
-        print("complete")
-        break
-      elseif event[1] == "timer" and event[2] == cancelT then
-        if canCancel then
-          os.queueEvent("kill")
-          break
-        else
-          cancelT = os.startTimer(2)
-        end
-      end
-    end
-  end]]
-  )
+  end)
   mon.setBackgroundColor(custom.farthestBackground.bg)
   mon.setCursorPos(1,1)
   mon.write(" ")
