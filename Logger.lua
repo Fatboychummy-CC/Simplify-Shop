@@ -1,6 +1,6 @@
 --[[
 2
-noRequire
+REQUIRED
 Made the logger open a single log file.  No more spammy names.
 Logger, designed for Krist Shops.  You may edit and reuse this to your heart's content.
 ]]
