@@ -1836,6 +1836,7 @@ end
 local function bsod(err)
   mon.setTextScale(0.5)
   mon.setBackgroundColor(colors.blue)
+  mon.setTextColor(colors.white)
   mon.clear()
   local mxX,mxY = mon.getSize()
   mon.setCursorPos(1,mxY/2)
