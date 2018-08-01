@@ -1,12 +1,13 @@
 --[[
-2
+2.001
 REQUIRED
-Made the logger open a single log file.  No more spammy names.
+Made the logger open a single log file.  No more spammy names. (logger is no longer compatible with old shop versions)
 Logger, designed for Krist Shops.  You may edit and reuse this to your heart's content.
 ]]
 
-logVersion = 2
+logVersion = 2.001
 local custom = false
+local shopVersion = nil
 
 local LOG_LOCATION = false
 local LOG_NAME = false
@@ -84,7 +85,8 @@ if fs.exists("fatShopCustomization") then
   end
 end
 
-function isUpdate()
+function isUpdate(shop)
+  shopVersion = shop
   local handle = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
   handle.readLine()
   local v = tonumber(handle.readLine())
@@ -98,6 +100,7 @@ function isUpdate()
   end
   return v > logVersion
 end
+
 function update()
   print("An update to the logger is available.")
   local h1 = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
@@ -195,6 +198,7 @@ function purchaseLog(item,amount,price,addplay,tf)
     pFileHandle.flush()
   end
 end
+
 function info(notif)
     print(notif and "[INFO]: "..notif or "[INFO]: ?")
     if doInfoLogging and fileHandle then
@@ -202,9 +206,12 @@ function info(notif)
       fileHandle.flush()
     end
 end
+
 function ree()
-    print("[REE]: REEEEEEEEEEEEEEEEEEEEEEEEE")
+  assert(shopVersion ~= nil and shopVersion >= 2.2,"Shop is no longer compatible with the logger, please update.")
+  print("[compat]: Compatibility check complete.")
 end
+
 function warn(notif)
     if term.isColor and term.isColor() then
       local oldC = term.getTextColour()
