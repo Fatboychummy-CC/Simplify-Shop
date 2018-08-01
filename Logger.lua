@@ -1,11 +1,11 @@
 --[[
-1.4
-REQUIRED
-Fixed a small thing (forgot to close a handle), and added a few minor visual details
+2
+noRequire
+Made the logger open a single log file.  No more spammy names.
 Logger, designed for Krist Shops.  You may edit and reuse this to your heart's content.
 ]]
 
-logVersion = 1.4
+logVersion = 2
 local custom = false
 
 local LOG_LOCATION = false
@@ -36,15 +36,8 @@ if fs.exists("fatShopCustomization") then
     local logName = LOG_LOCATION..LOG_NAME
     if not fs.exists(LOG_LOCATION) then
       fs.makeDir(LOG_LOCATION)
-      fileHandle = fs.open(logName.."1","w")
-    else
-      local i = 1
-      local logName2 = logName..tostring(i)
-      repeat
-        i = i + 1
-      until not fs.exists(logName..tostring(i))
-      fileHandle = fs.open(logName..tostring(i),"w")
     end
+    fileHandle = fs.open(logName,"a")
     if fileHandle then
       info("File is opened for logging")
     else
@@ -64,6 +57,8 @@ if fs.exists("fatShopCustomization") then
     end
     if pFileHandle then
       info("File is opened for purchase logging")
+      fileHandle.writeLine("-----[START LOG]-----")
+      fileHandle.flush()
     else
       severe("Could not open a file for purchase logging.")
     end
@@ -175,13 +170,15 @@ function purchase(a)
     pFileHandle.flush()
   end
 end
-function purchaseLog(item,amount,price)
+function purchaseLog(item,amount,price,addplay,tf)
   local function err(nm,exp,tp)
     return "purchaseLog Bad argument #"..tostring(nm)..": expected "..exp..", got "..tp.."."
   end
   assert(type(item) == "string",err(1,"string",type(item)))
   assert(type(amount) == "number",err(2,"number",type(amount)))
   assert(type(price) == "number",err(3,"number",type(price)))
+  assert(type(addplay) == "string",err(4,"string",type(addplay)))
+  assert(type(tf) == "boolean" ,err(5,"boolean",type(tf)))
   if term.isColor and term.isColor() then
     local oldC = term.getTextColor()
     term.write("[")
@@ -192,9 +189,9 @@ function purchaseLog(item,amount,price)
   else
     term.write("[PURCHASE]: ")
   end
-  print(item.."["..tostring(amount).."] for "..tostring(price)..".")
+  print(tf and "player "..addplay.." bought "..item.."["..tostring(amount).."] for "..tostring(price).."."  or "address "..addplay.." bought "..item.."["..tostring(amount).."] for "..tostring(price)..".")
   if pFileHandle then
-    pFileHandle.writeLine("--[PURCHASE]: "..tostring(amount).." of "..item.." for "..tostring(price).." krist.")
+    pFileHandle.writeLine(tf and "--[PURCHASE]: player "..addplay.." bought "..item.."["..tostring(amount).."] for "..tostring(price).."."  or "--[PURCHASE]: address "..addplay.." bought "..item.."["..tostring(amount).."] for "..tostring(price)..".")
     pFileHandle.flush()
   end
 end
