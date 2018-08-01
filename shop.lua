@@ -1,6 +1,6 @@
 --[[
-2.102
-Urgent upgrade which fixes a bug where players can get double the amount of items for the price of half!
+2.2
+Added purchase forwarding - you can now automatically send krist directly to another account directly after a purchase.  Fixed a few bugs as well, should crash 95% less.
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 2.102
+local version = 2.2
 local tArgs = {...}
 
 local params = {
@@ -237,6 +237,8 @@ local function fixCustomization(key)
     ao(type(custom.useBothChestTypes) == "boolean" and "  useBothChestTypes = "..tostring(custom.useBothChestTypes).."," or "  useBothChestTypes = false,")
     ao(type(custom.useSingleChest) == "boolean" and "  useSingleChest = "..tostring(custom.useSingleChest)..", --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest." or "  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
     ao(custom.chestSide and "  chestSide = \""..custom.chestSide.."\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")" or "  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
+    ao(type(custom.doPurchaseForwarding) == "boolean" and "  doPurchaseForwarding = "..tostring(custom.doPurchaseForwarding).."," or "  doPurchaseForwarding = false," )
+    ao(custom.purchaseForwardingAddress and "  purchaseForwardingAddress = "..custom.purchaseForwardingAddress.."," or "  purchaseForwardingAddress = \"fakeAddress\"," )
     ao(type(custom.compactMode) == "boolean" and "  compactMode = "..tostring(custom.compactMode).."," or "  compactMode = false,")
     ao("  farthestBackground = {")
     if chk(custom.farthestBackground) then
@@ -392,6 +394,7 @@ local function fixCustomization(key)
       ao("    underpay = \"You seem to have underpaid.\",")
       ao("    change = \"You overpaid by a small amount, here's your change.\",")
       ao("    outOfStock = \"We do not have any stock of that item!\",")
+      ao("    UPDATE = \"The shop is updating it's stocks and an error occured!\",")
     end
     ao("  },")
     ao("  LOGGER = {")
@@ -787,8 +790,8 @@ end
 
 
 
-local function refund(to,amt,rsn)
-    local success,err = await(k.makeTransaction,privKey,to,amt,rsn and "message="..rsn or "message=Unknown error occured, take your money back")
+local function refund(to,amt,rsn,gbad)
+    local success,err = await(k.makeTransaction,privKey,to,amt,( rsn and gbad and "message="..rsn ) or ( rsn and not gbad and "error="..rsn ) or ( "error=Unknown error occured, take your money back" ) )
     if not success then
         logger.severe("Failed to send refund")
         print(textutils.serialise(err))
@@ -827,6 +830,8 @@ local function writeCustomization(name)
     ao("  useBothChestTypes = false,")
     ao("  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
     ao("  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
+    ao("  doPurchaseForwarding = false,")
+    ao("  purchaseForwardingAddress = \"fakeAddress\",")
     ao("  compactMode = false,")
     ao("  farthestBackground = {")
     ao("    bg = colors.black,")
@@ -1013,23 +1018,23 @@ local function refreshChests()
   chests = {}
   if not custom.useSingleChest or custom.useBothChestTypes then
     local allPs = peripheral.getNames()
-      for i = 1,#allPs do
-        if allPs[i]:find("chest") or allPs[i]:find("shulker") then
-          table.insert(chests,allPs[i])
-        end
+    for i = 1,#allPs do
+      if allPs[i]:find("chest") or allPs[i]:find("shulker") then
+        table.insert(chests,allPs[i])
       end
     end
-    if custom.useSingleChest or custom.useBothChestTypes then
-      local yay = true
-      for i = 1,#chests do
-        if chests[i] == custom.chestSide then
-          yay = false
-        end
-      end
-      if yay then
-        table.insert(chests,custom.chestSide)
+  end
+  if custom.useSingleChest or custom.useBothChestTypes then
+    local yay = true
+    for i = 1,#chests do
+      if chests[i] == custom.chestSide then
+        yay = false
       end
     end
+    if yay then
+      table.insert(chests,custom.chestSide)
+    end
+  end
 end
 
 local function recursiveCopy(from,to)
@@ -1042,6 +1047,8 @@ local function recursiveCopy(from,to)
     end
   end
 end
+
+
 
 local function refreshItems()
   refreshChests()
@@ -1077,6 +1084,13 @@ local function refreshItems()
   return sIL2
 end
 
+local function doRefresh()
+  local ok = false
+  ok,sIL = pcall(refreshItems)
+  if not ok and type(sIL)  == "string" then
+    logger.severe(sIL)
+  end
+end
 
 local function sortItems()
   sIL = {}
@@ -1624,14 +1638,6 @@ if true then
     for i = 1,16 do
       drawColorBox(oCT[i],2)
     end
---[[    local a1 = "!exampleText :D!"
-    local a2 =   "More example"
-    square(mX/2-a1:len()/2-0.5,19,mX/2+a1:len()/2+0.5,22,selected.bg)
-    mon.setCursorPos(mX/2-a1:len()/2+0.5,20)
-    mon.setTextColor(selected.fg)
-    mon.write(a1)
-    mon.setCursorPos(mX/2-a2:len()/2+0.5,21)
-    mon.write(a2)]]
   end
 
   local function drawBoxColors1(writ,selected)
@@ -1816,7 +1822,8 @@ end
 -------------BEGIN-------------
 checkAllTheThings()
 sortItems()
-sIL = refreshItems()
+doRefresh()
+
 drawBG()
 
 
@@ -1842,17 +1849,21 @@ end
 
 
 local function doPurchase(data,updoot)
-  local tx = data.transaction or json.
-  --if tx.from ~= pubKey then
-  logger.info("Payment to: "..tx.to.." (we are "..pubKey..")")
+  local tx = data.transaction or json.decode(data)
   local meta = nil
+  local tf = false
   if tx.metadata then
     meta = k.parseMeta(tx.metadata)
+  else
+    meta = {meta = {}}
   end
   if not meta or not meta.meta or not meta.meta["return"] then
     returnTo = tx.from
   else
     returnTo = meta.meta["return"]
+  end
+  if meta.meta.username then
+    tf = true
   end
   if selection and tx.to == pubKey then
     logger.info("Payment being processed.")
@@ -1862,24 +1873,28 @@ local function doPurchase(data,updoot)
       local items_required = math.floor(paid/item.price)
       local items_grabbed = grabItems(item.find,item.damage,items_required)
       if items_grabbed > 0 then
-        logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid)
+        logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid,meta.meta.username or tx.from,tf)
       end
       local over = paid%item.price
       local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
+
       if item.price > paid then
-        refund(returnTo,tx.value,custom.REFUNDS.underpay)
+        refund(returnTo,tx.value,custom.REFUNDS.underpay,false)
       else
         if refundAmt > 0 then
-          refund(returnTo,refundAmt,custom.REFUNDS.change)
+          refund(returnTo,refundAmt,custom.REFUNDS.change,true)
           logger.purchase("Sent refund of "..refundAmt.." due to overpay.")
         end
       end
+      if custom.doPurchaseForwarding and items_grabbed*item.price > 0  then
+        refund(custom.purchaseForwardingAddress,math.ceil(items_grabbed*item.price),(meta.meta.username and "player "..meta.meta.username.." bought "..tostring(items_grabbed).." of "..item.display.." at "..custom.shopName ) or ( tx.from and "address "..tx.from.." bought "..tostring(items_grabbed).." of "..item.display.." at "..custom.shopName ) or "Purchase-Forwarding ("..custom.shopName..")",true )
+      end
     else
       if updoot then
-        refund(returnTo,tx.value,custom.REFUNDS.UPDATE)
+        refund(returnTo,tx.value,custom.REFUNDS.UPDATE,false)
         logger.purchase("Sent refund of "..tx.value.."due to UPDATING_STOCKS")
       else
-        refund(returnTo,tx.value,custom.REFUNDS.outOfStock)
+        refund(returnTo,tx.value,custom.REFUNDS.outOfStock,false)
         logger.purchase("Sent refund of "..tx.value.." due to not having the item selected.")
       end
     end
@@ -1887,7 +1902,7 @@ local function doPurchase(data,updoot)
     if tx.to == pubKey then
       logger.purchase("No item selected, but we were payed!  Returning...")
       if returnTo then
-        refund(returnTo,tx.value,custom.REFUNDS.noItemSelected)
+        refund(returnTo,tx.value,custom.REFUNDS.noItemSelected,false)
       end
     end
   end
