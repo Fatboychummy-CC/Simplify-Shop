@@ -1,5 +1,5 @@
 --[[
-2.2
+2.201
 Added purchase forwarding - you can now automatically send krist directly to another account directly after a purchase.  Fixed a few bugs as well, should crash 95% less.
 
 
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 2.2
+local version = 2.201
 local tArgs = {...}
 
 local params = {
@@ -101,7 +101,7 @@ if true then
     print("Up to date.")
   end
 
-  if logger.isUpdate() then
+  if logger.isUpdate(version) then
     if logger.update() then
       didUpdate = true
     end
