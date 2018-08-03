@@ -1,6 +1,6 @@
 --[[
-16
-Changed from a version tag to a build number for better updating.  Also changed a very teensy thing for logging.
+17
+Fixed a bug that caused a crash, and the shop will now auto-reboot if it fails to update twice.
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 16
+local version = 17
 local tArgs = {...}
 
 local params = {
@@ -170,6 +170,7 @@ local buttons = {}
 local recentPress = false
 local purchaseTimer = "nothing to see yet"
 local cobCount = 0
+local refreshCheck = false
 
 
 local function fixCustomization(key)
@@ -1038,12 +1039,14 @@ local function refreshChests()
 end
 
 local function recursiveCopy(from,to)
-  for k,v in pairs(from) do
-    if type(v) == "table" then
-      to[k] = {}
-      recursiveCopy(from[k],to[k])
-    else
-      to[k] = v
+  if type(from) == "table" then
+    for k,v in pairs(from) do
+      if type(v) == "table" then
+        to[k] = {}
+        recursiveCopy(from[k],to[k])
+      else
+        to[k] = v
+      end
     end
   end
 end
@@ -1088,9 +1091,18 @@ local function doRefresh()
   local ok = false
   ok,sIL = pcall(refreshItems)
   if not ok and type(sIL)  == "string" then
-    logger.warn("Item refresh failed with code: "..sIL.."... skipping.")
+    logger.warn("Item refresh failed with code: "..sIL.."... retrying.")
   elseif not ok then
-    logger.warn("Item refresh failed with unknown code... skipping.")
+    logger.warn("Item refresh failed with unknown code... retrying.")
+  end
+  if not ok then
+    if refreshCheck then
+      error("Failed second refresh check.  Rebooting.")
+    end
+    refreshCheck = true
+    doRefresh()
+  else
+    refreshCheck = false
   end
 end
 
@@ -1824,8 +1836,12 @@ end
 -------------BEGIN-------------
 checkAllTheThings()
 sortItems()
-doRefresh()
+local ten = pcall(doRefresh)
 
+if not ten then
+  logger.warn("Failed initial refresh check.  Auto reboot if next fails.")
+  refreshCheck = true
+end
 drawBG()
 
 
