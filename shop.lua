@@ -1,6 +1,6 @@
 --[[
-16
-Changed from a version tag to a build number for better updating.  Also changed a very teensy thing for logging.
+17
+Minor bug fix to cover the previous minor update.
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 16
+local version = 17
 local tArgs = {...}
 
 local params = {
@@ -1038,12 +1038,14 @@ local function refreshChests()
 end
 
 local function recursiveCopy(from,to)
-  for k,v in pairs(from) do
-    if type(v) == "table" then
-      to[k] = {}
-      recursiveCopy(from[k],to[k])
-    else
-      to[k] = v
+  if type(from) == "table" then
+    for k,v in pairs(from) do
+      if type(v) == "table" then
+        to[k] = {}
+        recursiveCopy(from[k],to[k])
+      else
+        to[k] = v
+      end
     end
   end
 end
