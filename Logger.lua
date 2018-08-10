@@ -4,7 +4,7 @@ REQUIRED
 Fixed the "failed to index upvalue fileHandle" bug
 ]]
 
-logVersion = 2.001
+logVersion = 3
 local custom = false
 local shopVersion = nil
 
