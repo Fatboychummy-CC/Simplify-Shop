@@ -1,8 +1,7 @@
 --[[
-2.001
+3
 REQUIRED
-Made the logger open a single log file.  No more spammy names. (logger is no longer compatible with old shop versions)
-Logger, designed for Krist Shops.  You may edit and reuse this to your heart's content.
+Fixed the "failed to index upvalue fileHandle" bug
 ]]
 
 logVersion = 2.001
@@ -58,8 +57,8 @@ if fs.exists("fatShopCustomization") then
     end
     if pFileHandle then
       info("File is opened for purchase logging")
-      fileHandle.writeLine("-----[START LOG]-----")
-      fileHandle.flush()
+      pFileHandle.writeLine("-----[START LOG]-----")
+      pFileHandle.flush()
     else
       severe("Could not open a file for purchase logging.")
     end
