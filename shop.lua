@@ -1,6 +1,6 @@
 --[[
-17
-Minor bug fix to cover the previous minor update.
+18
+Bug fix to fix single chest networks
 
 
     SIMPLIFY Shop
@@ -678,7 +678,7 @@ if fs.exists(".turtle") then
 else
     local juan = nil
     for k,v in pairs(peripheral.getNames()) do
-        if v:find("chest") then juan = v break end
+        if peripheral.getType(v):find("chest") then juan = v break end
     end
     if not juan then
         error("No chests connected to the network")
