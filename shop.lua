@@ -1,6 +1,6 @@
 --[[
 18
-Bug fix to fix single chest networks
+Increase version number to stop update check
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/fatboychummy/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 17
+local version = 18
 local tArgs = {...}
 
 local params = {
