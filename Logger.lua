@@ -86,7 +86,7 @@ end
 
 function isUpdate(shop)
   shopVersion = shop
-  local handle = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
+  local handle = http.get("https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/Logger.lua")
   handle.readLine()
   local v = tonumber(handle.readLine())
   handle.close()
@@ -102,7 +102,7 @@ end
 
 function update()
   print("An update to the logger is available.")
-  local h1 = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
+  local h1 = http.get("https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/Logger.lua")
   h1.readLine()
   local v = tonumber(h1.readLine())
   local required = h1.readLine()
@@ -143,7 +143,7 @@ function update()
   end
 
   if doUpdate then
-    local handle = http.get("https://raw.githubusercontent.com/fatboychummy/Simplify-Shop/master/Logger.lua")
+    local handle = http.get("https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/Logger.lua")
     fs.delete("logger.lua")
     local h2 = fs.open("logger.lua","w")
     h2.write(handle.readAll())
