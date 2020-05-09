@@ -1390,7 +1390,7 @@ local function drawBG()
   end
 end
 
-local function draw(sel,override)
+local function draw(sel,override,errText)
   oldY = sel
   refreshButtons()
   local toDraw = custom.itemsDrawnAtOnce
@@ -1526,6 +1526,14 @@ local function draw(sel,override)
     end
   else
     square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.background.bg)
+  end
+  if errText then
+    square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.bigSelectionEmptyStock.bg)
+    mon.setTextColor(custom.bigSelectionEmptyStock.fg)
+    for i = 0, 5 do
+      mon.setCursorPos(mX/2+6,displStart + i)
+      mon.write(errText[i + 1] or "")
+    end
   end
 
   local bigInfoBegin = 8
@@ -1987,19 +1995,37 @@ local function mainJua()
           if page < mxPages then
             page = page + 1
             draw()
+            return
           end
+          draw(nil, nil,
+          {
+            "Chatty error:",
+            "Already at last page!"
+          })
         end,
         previous = function()
           if page > 1 then
             page = page - 1
             draw()
+            return
           end
+          draw(nil, nil,
+          {
+            "Chatty error:",
+            "Already at first page!"
+          })
         end,
         back = function()
           if page > 1 then
             page = page - 1
             draw()
+            return
           end
+          draw(nil, nil,
+          {
+            "Chatty error:",
+            "Already at first page!"
+          })
         end,
         select = function(num)
           local nnum = tonumber(num)
@@ -2007,12 +2033,24 @@ local function mainJua()
             recentPress = true
             recentPressCount = 3
             draw(custom.compactMode and 3 + nnum or 7 + nnum)
+            return
           end
+          draw(nil, nil,
+          {
+            "Chatty error:",
+            "Expected number as third arg."
+          })
         end,
         cobble = function()
           if custom.touchHereForCobbleButton then
             grabItems("minecraft:cobblestone",0,64)
+            return
           end
+          draw(nil, nil,
+          {
+            "Chatty error:",
+            "Cobble dispenser disabled."
+          })
         end
       }
       if textFuncs[split[2]] then
@@ -2024,7 +2062,13 @@ local function mainJua()
         mon.setCursorPos(1, 3)
         mon.setBackgroundColor(custom.farthestBackground.bg)
         mon.write(" ")
+        return
       end
+      draw(nil, nil,
+      {
+        "Chatty error:",
+        "No function '" .. tostring(split[2]) .. "'."
+      })
     end
   end)
 
