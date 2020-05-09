@@ -1250,17 +1250,17 @@ local function refreshButtons()
   if custom.compactMode then
     if custom.drawBottomInfoBar then
       if buttons.cobble.enabled then
-        buttons.cobble.y1 = mY-2
-        buttons.cobble.y2 = mY-2
+        buttons.cobble.y1 = mY-3
+        buttons.cobble.y2 = mY-3
         buttons.cobble.x1 = 16
         buttons.cobble.content = "Free Cobble ("..cobCount..")"
         local b = buttons.cobble.content
         buttons.cobble.x1 = buttons.cobble.x1-b:len()/2-1
         buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
-        buttons.pgUp.y1 = mY-4
-        buttons.pgUp.y2 = mY-4
-        buttons.pgDwn.y1 = mY-4
-        buttons.pgDwn.y2 = mY-4
+        buttons.pgUp.y1 = mY-5
+        buttons.pgUp.y2 = mY-5
+        buttons.pgDwn.y1 = mY-5
+        buttons.pgDwn.y2 = mY-5
       else
         buttons.pgUp.y1 = mY-3
         buttons.pgUp.y2 = mY-3
@@ -1269,22 +1269,37 @@ local function refreshButtons()
       end
     else
       if buttons.cobble.enabled then
-        buttons.cobble.y1 = mY
-        buttons.cobble.y2 = mY
-        buttons.cobble.x1 = 16
         buttons.cobble.content = "Free Cobble ("..cobCount..")"
         local b = buttons.cobble.content
-        buttons.cobble.x1 = buttons.cobble.x1-b:len()/2-1
-        buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
-        buttons.pgUp.y1 = mY-2
-        buttons.pgUp.y2 = mY-2
-        buttons.pgDwn.y1 = mY-2
-        buttons.pgDwn.y2 = mY-2
+        buttons.cobble.x1 = 16-b:len()/2-1
+        buttons.cobble.x2 = 17+b:len()/2-1
+        if custom.chatty.enabled and custom.chatty.showNotice then
+          buttons.cobble.y1 = mY-1
+          buttons.cobble.y2 = mY-1
+          buttons.pgUp.y1 = mY-3
+          buttons.pgUp.y2 = mY-3
+          buttons.pgDwn.y1 = mY-3
+          buttons.pgDwn.y2 = mY-3
+        else
+          buttons.cobble.y1 = mY
+          buttons.cobble.y2 = mY
+          buttons.pgUp.y1 = mY-2
+          buttons.pgUp.y2 = mY-2
+          buttons.pgDwn.y1 = mY-2
+          buttons.pgDwn.y2 = mY-2
+        end
       else
-        buttons.pgUp.y1 = mY
-        buttons.pgUp.y2 = mY
-        buttons.pgDwn.y1 = mY
-        buttons.pgDwn.y2 = mY
+        if custom.chatty.showNotice then
+          buttons.pgUp.y1 = mY-1
+          buttons.pgUp.y2 = mY-1
+          buttons.pgDwn.y1 = mY-1
+          buttons.pgDwn.y2 = mY-1
+        else
+          buttons.pgUp.y1 = mY
+          buttons.pgUp.y2 = mY
+          buttons.pgDwn.y1 = mY
+          buttons.pgDwn.y2 = mY
+        end
       end
     end
   else
