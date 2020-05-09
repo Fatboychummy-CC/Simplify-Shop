@@ -161,6 +161,7 @@ local sIL = {}
 local selection = false
 local recentPressCount = 0
 local oldY = 0
+local oldNotice = "no"
 local page = 1
 local mxPages = 1
 local mX = 0
@@ -168,6 +169,7 @@ local mY = 0
 local ws
 local buttons = {}
 local recentPress = false
+local recentNotice = false
 local purchaseTimer = "nothing to see yet"
 local cobCount = 0
 local chatEvent = "chat_message"
@@ -1970,8 +1972,12 @@ local function redraw()
   parallel.waitForAll(
   function()
     sIL = refreshItems()
-    if recentPressCount == 0 then selection = false recentPress = false oldY = false end
-    if recentPress then
+    if recentPressCount == 0 then selection = false recentPress = false oldY = false oldNotice = false end
+
+    if recentNotice then
+      draw(nil, nil, oldNotice)
+      recentPressCount = recentPressCount - 1
+    elseif recentPress then
       draw(oldY)
       recentPressCount = recentPressCount - 1
     else
@@ -2009,6 +2015,13 @@ local function mainJua()
     end
     local message = chatFunc(...)
 
+    local function chattyNotice(t1, t2, t3, t4, t5, t6)
+      recentPressCount = 1
+      recentNotice = true
+      oldNotice = {t1, t2, t3, t4, t5, t6}
+      draw(nil, nil, oldNotice)
+    end
+
     if string.match(message, "^" .. custom.chatty.prefix) then
       local split = {n = 0}
       for word in string.gmatch(message, "%w+") do
@@ -2022,11 +2035,10 @@ local function mainJua()
             draw()
             return
           end
-          draw(nil, nil,
-          {
+          chattyNotice(
             "Chatty error:",
             "Already at last page!"
-          })
+          )
         end,
         previous = function()
           if page > 1 then
@@ -2034,11 +2046,10 @@ local function mainJua()
             draw()
             return
           end
-          draw(nil, nil,
-          {
+          chattyNotice(
             "Chatty error:",
             "Already at first page!"
-          })
+          )
         end,
         back = function()
           if page > 1 then
@@ -2046,11 +2057,10 @@ local function mainJua()
             draw()
             return
           end
-          draw(nil, nil,
-          {
+          chattyNotice(
             "Chatty error:",
             "Already at first page!"
-          })
+          )
         end,
         select = function(num)
           local nnum = tonumber(num)
@@ -2060,22 +2070,20 @@ local function mainJua()
             draw(custom.compactMode and 3 + nnum or 7 + nnum)
             return
           end
-          draw(nil, nil,
-          {
+          chattyNotice(
             "Chatty error:",
             "Expected number as third arg."
-          })
+          )
         end,
         cobble = function()
           if custom.touchHereForCobbleButton then
             grabItems("minecraft:cobblestone",0,64)
             return
           end
-          draw(nil, nil,
-          {
+          chattyNotice(
             "Chatty error:",
             "Cobble dispenser disabled."
-          })
+          )
         end
       }
       if textFuncs[split[2]] then
@@ -2089,11 +2097,10 @@ local function mainJua()
         mon.write(" ")
         return
       end
-      draw(nil, nil,
-      {
+      chattyNotice(
         "Chatty error:",
         "No function '" .. tostring(split[2]) .. "'."
-      })
+      )
     end
   end)
 
