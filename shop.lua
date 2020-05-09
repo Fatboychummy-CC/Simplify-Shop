@@ -1997,6 +1997,7 @@ local function mainJua()
 
   jua.on("monitor_resize",function()
     mX,mY = mon.getSize()
+    mon.setTextScale(0.5)
     refreshButtons()
     drawBG()
     draw()
