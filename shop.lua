@@ -382,6 +382,15 @@ local function fixCustomization(key)
       ao("    fg = colors.red,")
     end
     ao("  },")
+    ao("  chatty = {")
+    if chk(custom.chatty) then
+      ao(type(custom.chatty.enabled) == "boolean" and custom.chatty.enabled and "    enabled = true," or "    enabled = false,")
+      ao(custom.chatty.prefix and "    prefix = \"" .. custom.chatty.prefix .. "\"," or "    prefix = \"shop" .. math.random(100000, 999999) .. "\",")
+    else
+      ao("    enabled = false,")
+      ao("    prefix = \"shop" .. math.random(100000, 999999) .. "\",")
+    end
+    ao("  },")
     ao("  REFUNDS = {")
     if chk(custom.REFUNDS) then
       ao(custom.REFUNDS.noItemSelected and "    noItemSelected = \""..custom.REFUNDS.noItemSelected.."\"," or "    noItemSelected = \"There is no item selected!\",")
@@ -895,6 +904,10 @@ local function writeCustomization(name)
     ao("  itemTableEmptyStock2 = {")
     ao("    bg = colors.black,")
     ao("    fg = colors.red,")
+    ao("  },")
+    ao("  chatty = {")
+    ao("    enabled = false,")
+    ao("    prefix = \"shop" .. math.random(100000, 999999) .. "\",")
     ao("  },")
 
     ao("  REFUNDS = {")
