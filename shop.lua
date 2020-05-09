@@ -1,6 +1,6 @@
 --[[
-18
-Increase version number to stop update check
+19
+Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 18
+local version = 19
 local tArgs = {...}
 
 local params = {
