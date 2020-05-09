@@ -241,7 +241,7 @@ local function fixCustomization(key)
     ao(type(custom.useSingleChest) == "boolean" and "  useSingleChest = "..tostring(custom.useSingleChest)..", --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest." or "  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
     ao(custom.chestSide and "  chestSide = \""..custom.chestSide.."\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")" or "  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
     ao(type(custom.doPurchaseForwarding) == "boolean" and "  doPurchaseForwarding = "..tostring(custom.doPurchaseForwarding).."," or "  doPurchaseForwarding = false," )
-    ao(custom.purchaseForwardingAddress and "  purchaseForwardingAddress = "..custom.purchaseForwardingAddress.."," or "  purchaseForwardingAddress = \"fakeAddress\"," )
+    ao(custom.purchaseForwardingAddress and "  purchaseForwardingAddress = \""..custom.purchaseForwardingAddress.."\"," or "  purchaseForwardingAddress = \"fakeAddress\"," )
     ao(type(custom.compactMode) == "boolean" and "  compactMode = "..tostring(custom.compactMode).."," or "  compactMode = false,")
     ao("  farthestBackground = {")
     if chk(custom.farthestBackground) then
