@@ -170,7 +170,10 @@ local buttons = {}
 local recentPress = false
 local purchaseTimer = "nothing to see yet"
 local cobCount = 0
-
+local chatEvent = "chat_message"
+local function chatFunc(event, player, message, uuid)
+  return message
+end
 
 local function fixCustomization(key)
   logger.info("Attempting to fix customization file.")
@@ -1960,7 +1963,6 @@ local function mainJua()
     end
   end)
 
-
   jua.on("monitor_resize",function()
     mX,mY = mon.getSize()
     refreshButtons()
@@ -1968,12 +1970,69 @@ local function mainJua()
     draw()
   end)
 
+  jua.on(chatEvent,function(...)
+    if not custom.chatty.enabled then
+      return
+    end
+    local message = chatFunc(...)
+
+    if string.match(message, "^" .. custom.chatty.prefix) then
+      local split = {n = 0}
+      for word in string.gmatch(message, "%w+") do
+        split.n = split.n + 1
+        split[split.n] = word
+      end
+      local textFuncs = {
+        next = function()
+          if page < mxPages then
+            page = page + 1
+            draw()
+          end
+        end,
+        previous = function()
+          if page > 1 then
+            page = page - 1
+            draw()
+          end
+        end,
+        back = function()
+          if page > 1 then
+            page = page - 1
+            draw()
+          end
+        end,
+        select = function(num)
+          local nnum = tonumber(num)
+          if nnum then
+            recentPress = true
+            recentPressCount = 3
+            draw(custom.compactMode and 3 + nnum or 7 + nnum)
+          end
+        end,
+        cobble = function()
+          if custom.touchHereForCobbleButton then
+            grabItems("minecraft:cobblestone",0,64)
+          end
+        end
+      }
+      if textFuncs[split[2]] then
+        mon.setCursorPos(1, 3)
+        mon.setBackgroundColor(custom.farthestBackground.bg ~= colors.yellow and colors.yellow or colors.black)
+        mon.write(" ")
+        textFuncs[split[2]](table.unpack(split, 3, split.n))
+        os.sleep(0.2)
+        mon.setCursorPos(1, 3)
+        mon.setBackgroundColor(custom.farthestBackground.bg)
+        mon.write(" ")
+      end
+    end
+  end)
+
   jua.on("monitor_touch",function(nm,side,x,y)
     if side == mName then
       recentPress = true
       recentPressCount = 3
       local pressed = whichPress(x,y)
-      local max = #sIL
       if inBetween(3,1,mX/2+3,mY,x,y) then
         draw(y)
       end
