@@ -48,14 +48,14 @@ end
 if not fs.exists("jua.lua") then
   shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua")
 end
-if not fs.exists("logger.lua") then
-  shell.run("wget https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/Logger.lua logger.lua")
+if not fs.exists("Logger.lua") then
+  shell.run("wget https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/Logger.lua Logger.lua")
 end
 
 ------CHECK FOR UPDATES
-os.unloadAPI("logger.lua")
-os.loadAPI("logger.lua")
-
+os.unloadAPI("Logger.lua")
+os.loadAPI("Logger.lua")
+local logger = Logger
 if true then
   local didUpdate = false
   local handle = http.get("https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/shop.lua")
