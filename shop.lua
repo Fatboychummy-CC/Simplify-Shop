@@ -1610,7 +1610,7 @@ local function draw(sel,override,errText)
 
   if custom.chatty.enabled and custom.chatty.showNotice then
     local iypos = 0
-    if not custom.showCustomInfo then
+    if not custom.drawBottomInfoBar then
       iypos = mY
     elseif custom.compactMode then
       iypos = mY - 2
