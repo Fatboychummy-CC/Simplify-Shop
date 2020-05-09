@@ -1497,7 +1497,7 @@ local function draw(sel,override,errText)
     bigSelEnd = 14
     displStart = 9
   end
-  if sel then
+  if sel and sel > skip then
     local i = sel-skip
     selection = i+(page-1)*(toDraw)
     local cur = sIL[selection]
