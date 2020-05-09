@@ -1552,11 +1552,11 @@ local function draw(sel,override,errText)
     square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.background.bg)
   end
   if errText then
-    square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.bigSelectionEmptyStock.bg)
-    mon.setTextColor(custom.bigSelectionEmptyStock.fg)
+    square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.chatty.infoBG)
+    mon.setTextColor(custom.chatty.infoFG)
     for i = 0, 5 do
       mon.setCursorPos(mX/2+6,displStart + i)
-      mon.write(errText[i + 1] or "")
+      mon.write(errText[i + 1] and string.sub(errText[i + 1], 1, (mX-5) - (mX/2+5) - 1) or "")
     end
   end
 
