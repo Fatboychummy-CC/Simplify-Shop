@@ -1607,6 +1607,22 @@ local function draw(sel,override,errText)
     buttons.cobble.enabled = true
     drawButton(buttons.cobble)
   end
+
+  if custom.chatty.enabled and custom.chatty.showNotice then
+    local iypos = 0
+    if not custom.showCustomInfo then
+      iypos = mY
+    elseif custom.compactMode then
+      iypos = mY - 2
+    else
+      iypos = mY - 4
+    end
+    mon.setBackgroundColor(custom.chatty.noticeBG)
+    mon.setTextColor(custom.chatty.noticeFG)
+    local msg = string.format("Chatty-Shop is enabled! For more information, say '%s info'.", custom.chatty.prefix)
+    mon.setCursorPos(mX / 2 - #msg / 2, iypos)
+    mon.write(msg)
+  end
 end
 
 
