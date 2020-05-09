@@ -2029,6 +2029,75 @@ local function mainJua()
         split[split.n] = word
       end
       local textFuncs = {
+        info = function()
+          chattyNotice(
+            "You can say,",
+            string.format("  %s <command>", custom.chatty.prefix),
+            "to interact with this shop!",
+            "",
+            string.format("say '%s help'", custom.chatty.prefix),
+            "for a list of commands."
+          )
+        end,
+        help = function(func)
+          if not func then
+            chattyNotice(
+              "help [func]: display this.",
+              "next: go to the next page.",
+              "previous/back: ",
+              "  go to the previous page.",
+              "select <slot>:",
+              "  select an item."
+            )
+          else
+            local textFuncs2 = {
+              help = function()
+                chattyNotice(
+                  "help:",
+                  "  Displays help info.",
+                  "help <function>:",
+                  "  Display detailed help info."
+                )
+              end,
+              previous = function()
+                chattyNotice(
+                  "previous:",
+                  "  Go to the previous page."
+                )
+              end,
+              back = function()
+                chattyNotice(
+                  "back:",
+                  "  Go to the previous page."
+                )
+              end,
+              next = function()
+                chattyNotice(
+                  "next:",
+                  "  Go to the next page."
+                )
+              end,
+              select = function()
+                chattyNotice(
+                  "select:",
+                  "  Select an item.",
+                  "",
+                  "  Item 1 is the item at the",
+                  "  very top of the list."
+                )
+              end
+            }
+            if textFuncs2[func] then
+              textFuncs2[func]()
+            else
+              chattyNotice(
+                "help:",
+                "  No function:",
+                "    " .. tostring(func)
+              )
+            end
+          end
+        end,
         next = function()
           if page < mxPages then
             page = page + 1
@@ -2086,21 +2155,29 @@ local function mainJua()
           )
         end
       }
-      if textFuncs[split[2]] then
+      local function setDot()
         mon.setCursorPos(1, 3)
         mon.setBackgroundColor(custom.farthestBackground.bg ~= colors.yellow and colors.yellow or colors.black)
         mon.write(" ")
-        textFuncs[split[2]](table.unpack(split, 3, split.n))
-        os.sleep(0.2)
+      end
+      local function killDot()
         mon.setCursorPos(1, 3)
         mon.setBackgroundColor(custom.farthestBackground.bg)
         mon.write(" ")
+      end
+      setDot()
+      if textFuncs[split[2]] then
+        textFuncs[split[2]](table.unpack(split, 3, split.n))
+        os.sleep(0.2)
+        killDot()
         return
       end
       chattyNotice(
         "Chatty error:",
         "No function '" .. tostring(split[2]) .. "'."
       )
+      os.sleep(0.2)
+      killDot()
     end
   end)
 
