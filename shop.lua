@@ -172,9 +172,20 @@ local recentPress = false
 local recentNotice = false
 local purchaseTimer = "nothing to see yet"
 local cobCount = 0
-local chatEvent = "chat_message"
-local function chatFunc(event, player, message, uuid)
-  return message
+local function chatFunc(event, ...)
+  if event == "chat_message" then
+    local player, message, uuid = ...
+    local tbl = {n = 0}
+    for word in string.gmatch(message, "%w+") do
+      tbl.n = tbl.n + 1
+      tbl[tbl.n] = word
+    end
+    return tbl
+  elseif event == "command" then
+    local user, command, args = ...
+    table.insert(args, 1, command)
+    return args
+  end
 end
 
 local function fixCustomization(key)
@@ -399,6 +410,8 @@ local function fixCustomization(key)
       ao(custom.chatty.infoFG and "    infoFG = " .. custom.chatty.infoFG .. "," or "    infoFG = colors.white,")
       ao(custom.chatty.infoBG and "    infoBG = " .. custom.chatty.infoBG .. "," or "    infoBG = colors.red,")
       ao("    -- the above are the colors of the popup when someone chats something and chatty reacts.")
+      ao(custom.chatty.event and "    event = \"" .. custom.chatty.event .. "\"," or "    event = \"chat_message\",")
+      ao("    -- If on switchcraft, change the above to 'command'")
     else
       ao("    enabled = false,")
       ao("    prefix = \"shop" .. math.random(100000, 999999) .. "\",")
@@ -410,6 +423,8 @@ local function fixCustomization(key)
       ao("    infoFG = colors.white,")
       ao("    infoBG = colors.red,")
       ao("    -- the above are the colors of the popup when someone chats something and chatty reacts.")
+      ao("    event = \"chat_message\",")
+      ao("    -- If on switchcraft, change the above to 'command'")
     end
     ao("  },")
     ao("  REFUNDS = {")
@@ -937,6 +952,8 @@ local function writeCustomization(name)
     ao("    infoFG = colors.white,")
     ao("    infoBG = colors.red,")
     ao("    -- the above are the colors of the popup when someone chats something and chatty reacts.")
+    ao("    event = \"chat_message\",")
+    ao("    -- If on switchcraft, change the above to 'command'")
     ao("  },")
 
     ao("  REFUNDS = {")
@@ -1634,7 +1651,7 @@ local function draw(sel,override,errText)
     end
     mon.setBackgroundColor(custom.chatty.noticeBG)
     mon.setTextColor(custom.chatty.noticeFG)
-    local msg = string.format("Chatty-Shop is enabled! For more information, say '%s info'.", custom.chatty.prefix)
+    local msg = string.format("Chatty-Shop is enabled! For more information, say '%s info'.", custom.chatty.event == "chat_message" and custom.chatty.prefix or custom.chatty.event == "command" and string.format("\\%s", custom.chatty.prefix))
     mon.setCursorPos(mX / 2 - #msg / 2, iypos)
     mon.write(msg)
   end
@@ -2040,11 +2057,12 @@ local function mainJua()
     draw()
   end)
 
-  jua.on(chatEvent,function(...)
+  jua.on(custom.chatty.event,function(...)
     if not custom.chatty.enabled then
       return
     end
-    local message = chatFunc(...)
+    local split = chatFunc(...)
+    local command = split[1]
 
     local function chattyNotice(t1, t2, t3, t4, t5, t6)
       recentPressCount = 1
@@ -2053,12 +2071,7 @@ local function mainJua()
       draw(nil, nil, oldNotice)
     end
 
-    if string.match(message, "^" .. custom.chatty.prefix) then
-      local split = {n = 0}
-      for word in string.gmatch(message, "%w+") do
-        split.n = split.n + 1
-        split[split.n] = word
-      end
+    if string.match(command, "^" .. custom.chatty.prefix) then
       local textFuncs = {
         info = function()
           chattyNotice(
