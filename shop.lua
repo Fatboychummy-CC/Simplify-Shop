@@ -1,6 +1,6 @@
 --[[
-20
-Fix chatbox failing due to json being nilified. || Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
+21
+Add waiting screen. || Fix chatbox failing due to json being nilified. || Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
 
 
     SIMPLIFY Shop
@@ -52,71 +52,9 @@ if not fs.exists("Logger.lua") then
   shell.run("wget https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/Logger.lua Logger.lua")
 end
 
-------CHECK FOR UPDATES
 os.unloadAPI("Logger.lua")
 os.loadAPI("Logger.lua")
 local logger = Logger
-if true then
-  local didUpdate = false
-  local handle = http.get("https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/shop.lua")
-  handle.readLine()
-  local v = tonumber(handle.readLine())
-  local notes = handle.readLine()
-  if v < version then
-    print(v,"<",version)
-  elseif v == version then
-    print(v,"=",version)
-  else
-    print(v,">",version)
-  end
-  handle.close()
-  if v > version then
-    print("There is an update available.")
-    print("Update notes: ")
-    print("--------------------------------")
-    print(notes)
-    print("--------------------------------")
-    print("Would you like to do the update now? (Y/N)")
-    local utm = os.startTimer(30)
-    while true do
-      local a = {os.pullEvent()}
-      if a[1] == "char" then
-        if a[2] == "y" then
-          fs.delete(shell.getRunningProgram())
-          shell.run("wget https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/shop.lua startup")
-          print("Update complete.")
-          didUpdate = true
-          break
-        elseif a[2] == "n" then
-          break
-        end
-      elseif a[1] == "timer" and a[2] == utm then
-        break
-      end
-    end
-    if not didUpdate then
-      print("Timed out or skipping update.")
-    end
-  else
-    print("Up to date.")
-  end
-
-  if logger.isUpdate(version) then
-    if logger.update() then
-      didUpdate = true
-    end
-  else
-    logger.info("Logger is up to date.")
-  end
-
-
-  if didUpdate then
-    print("Rebooting.")
-    os.sleep(2)
-    os.reboot()
-  end
-end
-------END
 
 local w = require("w")
 local r = require("r")
@@ -171,6 +109,7 @@ local recentPress = false
 local recentNotice = false
 local purchaseTimer = "nothing to see yet"
 local cobCount = 0
+
 local function chatFunc(event, ...)
   if event == "chat_message" then
     local player, message, uuid = ...
@@ -185,6 +124,77 @@ local function chatFunc(event, ...)
     table.insert(args, 1, command)
     return args
   end
+end
+
+local function checkUpdates()
+  local didUpdate = false
+  local handle = http.get("https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/shop.lua")
+  handle.readLine()
+  local v = tonumber(handle.readLine())
+  local notes = handle.readLine()
+  if v < version then
+    print(v,"<",version)
+  elseif v == version then
+    print(v,"=",version)
+  else
+    print(v,">",version)
+  end
+  handle.close()
+  if v > version then
+    mon.setTextScale(2)
+    mon.setBackgroundColor(colors.black)
+    mon.setCursorPos(1, 1)
+    mon.write("Update available...")
+    mon.setCursorPos(1, 2)
+    mon.write("Waiting...")
+    print("There is an update available.")
+    print("Update notes: ")
+    print("--------------------------------")
+    print(notes)
+    print("--------------------------------")
+    print("Would you like to do the update now? (Y/N)")
+    local utm = os.startTimer(30)
+    while true do
+      local a = {os.pullEvent()}
+      if a[1] == "char" then
+        if a[2] == "y" then
+          fs.delete(shell.getRunningProgram())
+          shell.run("wget https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/shop.lua startup")
+          print("Update complete.")
+          didUpdate = true
+          break
+        elseif a[2] == "n" then
+          break
+        end
+      elseif a[1] == "timer" and a[2] == utm then
+        break
+      end
+    end
+    if not didUpdate then
+      print("Timed out or skipping update.")
+    end
+  else
+    print("Up to date.")
+  end
+
+  if logger.isUpdate(version) then
+    if logger.update() then
+      didUpdate = true
+    end
+  else
+    logger.info("Logger is up to date.")
+  end
+
+
+  if didUpdate then
+    print("Rebooting.")
+    mon.setCursorPos(1, 3)
+    mon.write("Rebooting...")
+    os.sleep(2)
+    os.reboot()
+  end
+  mon.setCursorPos(1, 3)
+  mon.write("Timeout.")
 end
 
 local function fixCustomization(key)
@@ -2036,8 +2046,7 @@ local function redraw()
   mon.write(" ")
 end
 
-
-
+checkUpdates()
 
 local function mainJua()
   jua.on("timer",function(evt,tmr)
