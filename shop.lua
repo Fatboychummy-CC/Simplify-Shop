@@ -2062,7 +2062,7 @@ local function mainJua()
       mon.setBackgroundColor(custom.farthestBackground.bg)
       mon.write(" ")
     elseif tmr == updateTimer then
-      mon.setCursorPos(1, mX)
+      mon.setCursorPos(1, mY)
       mon.setBackgroundColor(updateSwitch and custom.farthestBackground.bg or custom.farthestBackground.bg == colors.red and colors.blue or colors.red)
       mon.write(" ")
       updateSwitch = not updateSwitch
