@@ -1,6 +1,6 @@
 --[[
-24
-Testing in prod is fun (fixes the final bug, for more info check the commit history on the github page.)
+25
+mmmmmmmmmMMMMMMmmmmmmmmmmmmmmmmmmmMMMMMmmmmmmmmmmmmmmmmmmmmmmmmmmm
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 24
+local version = 25
 local tArgs = {...}
 
 local params = {
@@ -1459,10 +1459,10 @@ local function drawBG()
   end
 end
 
-local updateFlag = checkUpdates()
+
 local updateTimer
-if updateFlag then
-  updateTimer = os.startTimer(3)
+if checkUpdates() then
+  updateTimer = os.startTimer(10)
 end
 local updateSwitch = false
 
@@ -2066,7 +2066,7 @@ local function mainJua()
       mon.setBackgroundColor(updateSwitch and custom.farthestBackground.bg or custom.farthestBackground.bg == colors.red and colors.blue or colors.red)
       mon.write(" ")
       updateSwitch = not updateSwitch
-      updateTimer = os.startTimer(3)
+      updateTimer = os.startTimer(5)
     end
   end)
 
