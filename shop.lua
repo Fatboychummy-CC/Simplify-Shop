@@ -1,6 +1,6 @@
 --[[
-21
-Fix updater || Add waiting screen. || Fix chatbox failing due to json being nilified. || Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
+22
+Send help || Fix updater || Add waiting screen. || Fix chatbox failing due to json being nilified. || Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 21
+local version = 22
 local tArgs = {...}
 
 local params = {
@@ -197,7 +197,6 @@ local function checkUpdates()
   mon.write("Timeout.")
   mX,mY = mon.getSize()
   mon.setTextScale(0.5)
-  refreshButtons()
 end
 
 local function fixCustomization(key)
