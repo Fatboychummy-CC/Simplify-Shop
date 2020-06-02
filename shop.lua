@@ -2022,11 +2022,11 @@ local function redraw()
     sIL = refreshItems()
     if recentPressCount == 0 then selection = false recentPress = false oldY = false oldNotice = false end
 
-    if recentNotice then
-      draw(nil, nil, oldNotice)
-      recentPressCount = recentPressCount - 1
-    elseif recentPress then
+    if recentPress then
       draw(oldY)
+      recentPressCount = recentPressCount - 1
+    elseif recentNotice then
+      draw(nil, nil, oldNotice)
       recentPressCount = recentPressCount - 1
     else
       draw()
@@ -2067,6 +2067,7 @@ local function mainJua()
     local function chattyNotice(t1, t2, t3, t4, t5, t6)
       recentPressCount = 1
       recentNotice = true
+      recentPress = false
       oldNotice = {t1, t2, t3, t4, t5, t6}
       draw(nil, nil, oldNotice)
     end
@@ -2179,6 +2180,7 @@ local function mainJua()
           local nnum = tonumber(num)
           if nnum then
             recentPress = true
+            recentNotice = false
             recentPressCount = 3
             draw(custom.compactMode and 3 + nnum or 7 + nnum)
             return
@@ -2229,6 +2231,7 @@ local function mainJua()
     if side == mName then
       recentPress = true
       recentPressCount = 3
+      recentNotice = false
       local pressed = whichPress(x,y)
       if inBetween(3,1,mX/2+3,mY,x,y) then
         draw(y)
