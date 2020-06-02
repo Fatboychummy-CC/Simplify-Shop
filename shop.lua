@@ -1,6 +1,6 @@
 --[[
-22
-Send help || Fix updater || Add waiting screen. || Fix chatbox failing due to json being nilified. || Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
+23
+AAAAA || Send help || Fix updater || Add waiting screen. || Fix chatbox failing due to json being nilified. || Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 22
+local version = 23
 local tArgs = {...}
 
 local params = {
@@ -193,10 +193,10 @@ local function checkUpdates()
     os.sleep(2)
     os.reboot()
   end
-  mon.setCursorPos(1, 3)
-  mon.write("Timeout.")
   mX,mY = mon.getSize()
   mon.setTextScale(0.5)
+  mon.clear()
+  return v > version
 end
 
 local function fixCustomization(key)
@@ -1459,6 +1459,13 @@ local function drawBG()
   end
 end
 
+local updateFlag = checkUpdates()
+local updateTimer
+if updateFlag then
+  updateTimer = os.startTimer(3)
+end
+local updateSwitch = false
+
 local function draw(sel,override,errText)
   oldY = sel
   refreshButtons()
@@ -2048,14 +2055,18 @@ local function redraw()
   mon.write(" ")
 end
 
-checkUpdates()
-
 local function mainJua()
   jua.on("timer",function(evt,tmr)
     if tmr == purchaseTimer then
       mon.setCursorPos(1,2)
       mon.setBackgroundColor(custom.farthestBackground.bg)
       mon.write(" ")
+    elseif tmr == updateTimer then
+      mon.setCursorPos(1, mX)
+      mon.setBackgroundColor(updateSwitch and custom.farthestBackground.bg or custom.farthestBackground.bg == colors.red and colors.blue or colors.red)
+      mon.write(" ")
+      updateSwitch = not updateSwitch
+      updateTimer = os.startTimer(3)
     end
   end)
 
