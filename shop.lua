@@ -1,6 +1,6 @@
 --[[
-23
-AAAAA || Send help || Fix updater || Add waiting screen. || Fix chatbox failing due to json being nilified. || Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
+24
+Testing in prod is fun (fixes the final bug, for more info check the commit history on the github page.)
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 23
+local version = 24
 local tArgs = {...}
 
 local params = {
@@ -193,8 +193,8 @@ local function checkUpdates()
     os.sleep(2)
     os.reboot()
   end
-  mX,mY = mon.getSize()
   mon.setTextScale(0.5)
+  mX,mY = mon.getSize()
   mon.clear()
   return v > version
 end
