@@ -1,6 +1,6 @@
 --[[
-18
-Increase version number to stop update check
+19
+Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 18
+local version = 19
 local tArgs = {...}
 
 local params = {
@@ -48,14 +48,14 @@ end
 if not fs.exists("jua.lua") then
   shell.run("wget","https://raw.githubusercontent.com/justync7/Jua/master/jua.lua")
 end
-if not fs.exists("logger.lua") then
-  shell.run("wget https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/Logger.lua logger.lua")
+if not fs.exists("Logger.lua") then
+  shell.run("wget https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/Logger.lua Logger.lua")
 end
 
 ------CHECK FOR UPDATES
-os.unloadAPI("logger.lua")
-os.loadAPI("logger.lua")
-
+os.unloadAPI("Logger.lua")
+os.loadAPI("Logger.lua")
+local logger = Logger
 if true then
   local didUpdate = false
   local handle = http.get("https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/shop.lua")
@@ -161,6 +161,7 @@ local sIL = {}
 local selection = false
 local recentPressCount = 0
 local oldY = 0
+local oldNotice = "no"
 local page = 1
 local mxPages = 1
 local mX = 0
@@ -168,9 +169,24 @@ local mY = 0
 local ws
 local buttons = {}
 local recentPress = false
+local recentNotice = false
 local purchaseTimer = "nothing to see yet"
 local cobCount = 0
-
+local function chatFunc(event, ...)
+  if event == "chat_message" then
+    local player, message, uuid = ...
+    local tbl = {n = 0}
+    for word in string.gmatch(message, "%w+") do
+      tbl.n = tbl.n + 1
+      tbl[tbl.n] = word
+    end
+    return tbl
+  elseif event == "command" then
+    local user, command, args = ...
+    table.insert(args, 1, command)
+    return args
+  end
+end
 
 local function fixCustomization(key)
   logger.info("Attempting to fix customization file.")
@@ -238,7 +254,7 @@ local function fixCustomization(key)
     ao(type(custom.useSingleChest) == "boolean" and "  useSingleChest = "..tostring(custom.useSingleChest)..", --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest." or "  useSingleChest = false, --if useBothChestTypes is true, this value does not matter.  If useBothChestTypes is false, and there is a network attached, the turtle will ignore everything except the single chest.")
     ao(custom.chestSide and "  chestSide = \""..custom.chestSide.."\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")" or "  chestSide = \"bottom\",--You can use a single chest attached to a network by typing it's network name here (eg: \"minecraft:chest_666\")")
     ao(type(custom.doPurchaseForwarding) == "boolean" and "  doPurchaseForwarding = "..tostring(custom.doPurchaseForwarding).."," or "  doPurchaseForwarding = false," )
-    ao(custom.purchaseForwardingAddress and "  purchaseForwardingAddress = "..custom.purchaseForwardingAddress.."," or "  purchaseForwardingAddress = \"fakeAddress\"," )
+    ao(custom.purchaseForwardingAddress and "  purchaseForwardingAddress = \""..custom.purchaseForwardingAddress.."\"," or "  purchaseForwardingAddress = \"fakeAddress\"," )
     ao(type(custom.compactMode) == "boolean" and "  compactMode = "..tostring(custom.compactMode).."," or "  compactMode = false,")
     ao("  farthestBackground = {")
     if chk(custom.farthestBackground) then
@@ -380,6 +396,35 @@ local function fixCustomization(key)
     else
       ao("    bg = colors.black,")
       ao("    fg = colors.red,")
+    end
+    ao("  },")
+    ao("  chatty = {")
+    if chk(custom.chatty) then
+      ao(type(custom.chatty.enabled) == "boolean" and custom.chatty.enabled and "    enabled = true," or "    enabled = false,")
+      ao(custom.chatty.prefix and "    prefix = \"" .. custom.chatty.prefix .. "\"," or "    prefix = \"shop" .. math.random(100000, 999999) .. "\",")
+      ao(type(custom.chatty.showNotice) == "boolean" and custom.chatty.showNotice and "    showNotice = true," or type(custom.chatty.showNotice) == "boolean" and "    showNotice = false," or "    showNotice = true,")
+      ao("    -- change the above value if you state that chatty is enabled elsewhere (like in big info or bottom info bar)")
+      ao(custom.chatty.noticeFG and "    noticeFG = " .. custom.chatty.noticeFG .. "," or "    noticeFG = colors.white,")
+      ao(custom.chatty.noticeFG and "    noticeBG = " .. custom.chatty.noticeBG .. "," or "    noticeBG = colors.black,")
+      ao("    -- the above are the colors of the notice that displays just above the bottom info bar.")
+      ao(custom.chatty.infoFG and "    infoFG = " .. custom.chatty.infoFG .. "," or "    infoFG = colors.white,")
+      ao(custom.chatty.infoBG and "    infoBG = " .. custom.chatty.infoBG .. "," or "    infoBG = colors.red,")
+      ao("    -- the above are the colors of the popup when someone chats something and chatty reacts.")
+      ao(custom.chatty.event and "    event = \"" .. custom.chatty.event .. "\"," or "    event = \"chat_message\",")
+      ao("    -- If on switchcraft, change the above to 'command'")
+    else
+      ao("    enabled = false,")
+      ao("    prefix = \"shop" .. math.random(100000, 999999) .. "\",")
+      ao("    showNotice = true,")
+      ao("    -- change the above value if you state that chatty is enabled elsewhere (like in big info or bottom info bar)")
+      ao("    noticeFG = colors.white,")
+      ao("    noticeBG = colors.black,")
+      ao("    -- the above are the colors of the notice that displays just above the bottom info bar.")
+      ao("    infoFG = colors.white,")
+      ao("    infoBG = colors.red,")
+      ao("    -- the above are the colors of the popup when someone chats something and chatty reacts.")
+      ao("    event = \"chat_message\",")
+      ao("    -- If on switchcraft, change the above to 'command'")
     end
     ao("  },")
     ao("  REFUNDS = {")
@@ -896,6 +941,20 @@ local function writeCustomization(name)
     ao("    bg = colors.black,")
     ao("    fg = colors.red,")
     ao("  },")
+    ao("  chatty = {")
+    ao("    enabled = false,")
+    ao("    prefix = \"shop" .. math.random(100000, 999999) .. "\",")
+    ao("    showNotice = true,")
+    ao("    -- change the above value if you state that chatty is enabled elsewhere (like in big info or bottom info bar)")
+    ao("    noticeFG = colors.white,")
+    ao("    noticeBG = colors.black,")
+    ao("    -- the above are the colors of the notice that displays just above the bottom info bar.")
+    ao("    infoFG = colors.white,")
+    ao("    infoBG = colors.red,")
+    ao("    -- the above are the colors of the popup when someone chats something and chatty reacts.")
+    ao("    event = \"chat_message\",")
+    ao("    -- If on switchcraft, change the above to 'command'")
+    ao("  },")
 
     ao("  REFUNDS = {")
     ao("    noItemSelected = \"There is no item selected!\",")
@@ -1208,17 +1267,17 @@ local function refreshButtons()
   if custom.compactMode then
     if custom.drawBottomInfoBar then
       if buttons.cobble.enabled then
-        buttons.cobble.y1 = mY-2
-        buttons.cobble.y2 = mY-2
+        buttons.cobble.y1 = mY-3
+        buttons.cobble.y2 = mY-3
         buttons.cobble.x1 = 16
         buttons.cobble.content = "Free Cobble ("..cobCount..")"
         local b = buttons.cobble.content
         buttons.cobble.x1 = buttons.cobble.x1-b:len()/2-1
         buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
-        buttons.pgUp.y1 = mY-4
-        buttons.pgUp.y2 = mY-4
-        buttons.pgDwn.y1 = mY-4
-        buttons.pgDwn.y2 = mY-4
+        buttons.pgUp.y1 = mY-5
+        buttons.pgUp.y2 = mY-5
+        buttons.pgDwn.y1 = mY-5
+        buttons.pgDwn.y2 = mY-5
       else
         buttons.pgUp.y1 = mY-3
         buttons.pgUp.y2 = mY-3
@@ -1227,22 +1286,37 @@ local function refreshButtons()
       end
     else
       if buttons.cobble.enabled then
-        buttons.cobble.y1 = mY
-        buttons.cobble.y2 = mY
-        buttons.cobble.x1 = 16
         buttons.cobble.content = "Free Cobble ("..cobCount..")"
         local b = buttons.cobble.content
-        buttons.cobble.x1 = buttons.cobble.x1-b:len()/2-1
-        buttons.cobble.x2 = buttons.cobble.x1+1+b:len()
-        buttons.pgUp.y1 = mY-2
-        buttons.pgUp.y2 = mY-2
-        buttons.pgDwn.y1 = mY-2
-        buttons.pgDwn.y2 = mY-2
+        buttons.cobble.x1 = 16-b:len()/2-1
+        buttons.cobble.x2 = 17+b:len()/2-1
+        if custom.chatty.enabled and custom.chatty.showNotice then
+          buttons.cobble.y1 = mY-1
+          buttons.cobble.y2 = mY-1
+          buttons.pgUp.y1 = mY-3
+          buttons.pgUp.y2 = mY-3
+          buttons.pgDwn.y1 = mY-3
+          buttons.pgDwn.y2 = mY-3
+        else
+          buttons.cobble.y1 = mY
+          buttons.cobble.y2 = mY
+          buttons.pgUp.y1 = mY-2
+          buttons.pgUp.y2 = mY-2
+          buttons.pgDwn.y1 = mY-2
+          buttons.pgDwn.y2 = mY-2
+        end
       else
-        buttons.pgUp.y1 = mY
-        buttons.pgUp.y2 = mY
-        buttons.pgDwn.y1 = mY
-        buttons.pgDwn.y2 = mY
+        if custom.chatty.showNotice then
+          buttons.pgUp.y1 = mY-1
+          buttons.pgUp.y2 = mY-1
+          buttons.pgDwn.y1 = mY-1
+          buttons.pgDwn.y2 = mY-1
+        else
+          buttons.pgUp.y1 = mY
+          buttons.pgUp.y2 = mY
+          buttons.pgDwn.y1 = mY
+          buttons.pgDwn.y2 = mY
+        end
       end
     end
   else
@@ -1374,7 +1448,7 @@ local function drawBG()
   end
 end
 
-local function draw(sel,override)
+local function draw(sel,override,errText)
   oldY = sel
   refreshButtons()
   local toDraw = custom.itemsDrawnAtOnce
@@ -1457,7 +1531,7 @@ local function draw(sel,override)
     bigSelEnd = 14
     displStart = 9
   end
-  if sel then
+  if sel and sel > skip then
     local i = sel-skip
     selection = i+(page-1)*(toDraw)
     local cur = sIL[selection]
@@ -1511,6 +1585,14 @@ local function draw(sel,override)
   else
     square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.background.bg)
   end
+  if errText then
+    square(mX/2+5,bigSelStart,mX-5,bigSelEnd,custom.chatty.infoBG)
+    mon.setTextColor(custom.chatty.infoFG)
+    for i = 0, 5 do
+      mon.setCursorPos(mX/2+6,displStart + i)
+      mon.write(errText[i + 1] and string.sub(errText[i + 1], 1, (mX-5) - (mX/2+5) - 1) or "")
+    end
+  end
 
   local bigInfoBegin = 8
   local bigInfoEnd = 16
@@ -1556,6 +1638,22 @@ local function draw(sel,override)
   if custom.touchHereForCobbleButton then
     buttons.cobble.enabled = true
     drawButton(buttons.cobble)
+  end
+
+  if custom.chatty.enabled and custom.chatty.showNotice then
+    local iypos = 0
+    if not custom.drawBottomInfoBar then
+      iypos = mY
+    elseif custom.compactMode then
+      iypos = mY - 2
+    else
+      iypos = mY - 4
+    end
+    mon.setBackgroundColor(custom.chatty.noticeBG)
+    mon.setTextColor(custom.chatty.noticeFG)
+    local msg = string.format("Chatty-Shop is enabled! For more information, say '%s info'.", custom.chatty.event == "chat_message" and custom.chatty.prefix or custom.chatty.event == "command" and string.format("\\%s", custom.chatty.prefix))
+    mon.setCursorPos(mX / 2 - #msg / 2, iypos)
+    mon.write(msg)
   end
 end
 
@@ -1922,9 +2020,13 @@ local function redraw()
   parallel.waitForAll(
   function()
     sIL = refreshItems()
-    if recentPressCount == 0 then selection = false recentPress = false oldY = false end
+    if recentPressCount == 0 then selection = false recentPress = false oldY = false oldNotice = false end
+
     if recentPress then
       draw(oldY)
+      recentPressCount = recentPressCount - 1
+    elseif recentNotice then
+      draw(nil, nil, oldNotice)
       recentPressCount = recentPressCount - 1
     else
       draw()
@@ -1947,20 +2049,190 @@ local function mainJua()
     end
   end)
 
-
   jua.on("monitor_resize",function()
     mX,mY = mon.getSize()
+    mon.setTextScale(0.5)
     refreshButtons()
     drawBG()
     draw()
+  end)
+
+  jua.on(custom.chatty.event,function(...)
+    if not custom.chatty.enabled then
+      return
+    end
+    local split = chatFunc(...)
+    local command = split[1]
+
+    local function chattyNotice(t1, t2, t3, t4, t5, t6)
+      recentPressCount = 1
+      recentNotice = true
+      recentPress = false
+      oldNotice = {t1, t2, t3, t4, t5, t6}
+      draw(nil, nil, oldNotice)
+    end
+
+    if string.match(command, "^" .. custom.chatty.prefix) then
+      local textFuncs = {
+        info = function()
+          chattyNotice(
+            "You can say,",
+            string.format("  %s <command>", custom.chatty.prefix),
+            "to interact with this shop!",
+            "",
+            string.format("say '%s help'", custom.chatty.prefix),
+            "for a list of commands."
+          )
+        end,
+        help = function(func)
+          if not func then
+            chattyNotice(
+              "help [func]: display this.",
+              "next: go to the next page.",
+              "previous/back: ",
+              "  go to the previous page.",
+              "select <slot>:",
+              "  select an item."
+            )
+          else
+            local textFuncs2 = {
+              help = function()
+                chattyNotice(
+                  "help:",
+                  "  Displays help info.",
+                  "help <function>:",
+                  "  Display detailed help info."
+                )
+              end,
+              previous = function()
+                chattyNotice(
+                  "previous:",
+                  "  Go to the previous page."
+                )
+              end,
+              back = function()
+                chattyNotice(
+                  "back:",
+                  "  Go to the previous page."
+                )
+              end,
+              next = function()
+                chattyNotice(
+                  "next:",
+                  "  Go to the next page."
+                )
+              end,
+              select = function()
+                chattyNotice(
+                  "select:",
+                  "  Select an item.",
+                  "",
+                  "  Item 1 is the item at the",
+                  "  very top of the list."
+                )
+              end
+            }
+            if textFuncs2[func] then
+              textFuncs2[func]()
+            else
+              chattyNotice(
+                "help:",
+                "  No function:",
+                "    " .. tostring(func)
+              )
+            end
+          end
+        end,
+        next = function()
+          if page < mxPages then
+            page = page + 1
+            draw()
+            return
+          end
+          chattyNotice(
+            "Chatty error:",
+            "Already at last page!"
+          )
+        end,
+        previous = function()
+          if page > 1 then
+            page = page - 1
+            draw()
+            return
+          end
+          chattyNotice(
+            "Chatty error:",
+            "Already at first page!"
+          )
+        end,
+        back = function()
+          if page > 1 then
+            page = page - 1
+            draw()
+            return
+          end
+          chattyNotice(
+            "Chatty error:",
+            "Already at first page!"
+          )
+        end,
+        select = function(num)
+          local nnum = tonumber(num)
+          if nnum then
+            recentPress = true
+            recentNotice = false
+            recentPressCount = 3
+            draw(custom.compactMode and 3 + nnum or 7 + nnum)
+            return
+          end
+          chattyNotice(
+            "Chatty error:",
+            "Expected number as third arg."
+          )
+        end,
+        cobble = function()
+          if custom.touchHereForCobbleButton then
+            grabItems("minecraft:cobblestone",0,64)
+            return
+          end
+          chattyNotice(
+            "Chatty error:",
+            "Cobble dispenser disabled."
+          )
+        end
+      }
+      local function setDot()
+        mon.setCursorPos(1, 3)
+        mon.setBackgroundColor(custom.farthestBackground.bg ~= colors.yellow and colors.yellow or colors.black)
+        mon.write(" ")
+      end
+      local function killDot()
+        mon.setCursorPos(1, 3)
+        mon.setBackgroundColor(custom.farthestBackground.bg)
+        mon.write(" ")
+      end
+      setDot()
+      if textFuncs[split[2]] then
+        textFuncs[split[2]](table.unpack(split, 3, split.n))
+        os.sleep(0.2)
+        killDot()
+        return
+      end
+      chattyNotice(
+        "Chatty error:",
+        "No function '" .. tostring(split[2]) .. "'."
+      )
+      os.sleep(0.2)
+      killDot()
+    end
   end)
 
   jua.on("monitor_touch",function(nm,side,x,y)
     if side == mName then
       recentPress = true
       recentPressCount = 3
+      recentNotice = false
       local pressed = whichPress(x,y)
-      local max = #sIL
       if inBetween(3,1,mX/2+3,mY,x,y) then
         draw(y)
       end
