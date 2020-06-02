@@ -1,6 +1,6 @@
 --[[
-19
-Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
+20
+Fix chatbox failing due to json being nilified. || Big update: Chatty has arrived! Now you can add a use a chat recorder to interface with the shop!
 
 
     SIMPLIFY Shop
@@ -123,7 +123,6 @@ local r = require("r")
 local k = require("k")
 os.loadAPI("json.lua")
 local json = _G.json
-_G.json = nil
 local jua = require("jua")
 w.init(jua)
 r.init(jua)
