@@ -1,6 +1,6 @@
 --[[
-25
-mmmmmmmmmMMMMMMmmmmmmmmmmmmmmmmmmmMMMMMmmmmmmmmmmmmmmmmmmmmmmmmmmm
+26
+'Krist may be offline' notification if a certain error occurs.
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 25
+local version = 26
 local tArgs = {...}
 
 local params = {
@@ -2335,6 +2335,9 @@ parallel.waitForAny(bego,function()
 end)
 if not suc then
   logger.severe(err)
+  if err:find("k%.lua") and err:find("attempt to index local %'data%' %(a nil value%)") then
+    err = "Krist may be offline."
+  end
   bsod(err)
   if logger.canLogBeOpened then
     logger.closeLog()
