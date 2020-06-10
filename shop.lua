@@ -143,6 +143,7 @@ local function checkUpdates()
   if v > version then
     mon.setTextScale(2)
     mon.setBackgroundColor(colors.black)
+    mon.clear()
     mon.setCursorPos(1, 1)
     mon.write("Update available...")
     mon.setCursorPos(1, 2)
