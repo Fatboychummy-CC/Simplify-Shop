@@ -6,6 +6,7 @@ This shop will soon be phased out for Simplify Shop V2! I've just got to make so
 
 Once the new shop is up, this shop will still run, though it will display a notification that V2 is available.
 
+=========================================================
 
 ### (This tutorial and the shop itself assumes you are running this on **SwitchCraft**)
 
