@@ -1,6 +1,12 @@
 # Simplify-Shop
 Kristshop which only requires one krist address, without a domain.
 
+# Important notice
+This shop will soon be phased out for Simplify Shop V2! I've just got to make some finishing touches to V2, which hopefully won't take too long to complete.
+
+Once the new shop is up, this shop will still run, though it will display a notification that V2 is available.
+
+
 ### (This tutorial and the shop itself assumes you are running this on **SwitchCraft**)
 
 ## Updating the shop
