@@ -1,6 +1,6 @@
 --[[
-26
-'Krist may be offline' notification if a certain error occurs.
+27
+Fix overpaying in refunds when price and amount of items given is very small.
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 26
+local version = 27
 local tArgs = {...}
 
 local params = {
@@ -1998,7 +1998,7 @@ local function doPurchase(data,updoot)
         logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid,meta.meta.username or tx.from,tf)
       end
       local over = paid%item.price
-      local refundAmt = math.floor((items_required - items_grabbed)*item.price+over)
+      local refundAmt = math.floor((items_required - items_grabbed)*item.price+(over >= 1 and over or 0))
 
       if item.price > paid then
         refund(returnTo,tx.value,custom.REFUNDS.underpay,false)
