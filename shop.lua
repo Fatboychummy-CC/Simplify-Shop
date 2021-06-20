@@ -1,5 +1,5 @@
 --[[
-28
+29
 Fix overpaying in refunds when price and amount of items given is very small + Simplify the logic for overpaying.
 
 
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 28
+local version = 29
 local tArgs = {...}
 
 local params = {
@@ -1997,7 +1997,7 @@ local function doPurchase(data,updoot)
       if items_grabbed > 0 then
         logger.purchaseLog(item.find..":"..item.damage,items_grabbed,paid,meta.meta.username or tx.from,tf)
       end
-      local over = paid%item.price
+
       local refundAmt = paid - math.ceil(items_grabbed * item.price)
 
       if item.price > paid then
