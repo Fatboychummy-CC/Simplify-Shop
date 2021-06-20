@@ -1,6 +1,6 @@
 --[[
-29
-Fix overpaying in refunds when price and amount of items given is very small + Simplify the logic for overpaying.
+30
+Fix overpaying in refunds when price and amount of items given is very small + Simplify the logic for overpaying + fix shop not writing to the correct file on updating.
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 29
+local version = 30
 local tArgs = {...}
 
 local params = {
@@ -126,6 +126,21 @@ local function chatFunc(event, ...)
   end
 end
 
+local function getFile(url, file)
+  local handle = http.get(url)
+  if handle then
+    local file = fs.open(file, 'w')
+    if file then
+      file.write(handle.readAll())
+      file.close()
+    else
+      error(string.format("Failed to open file '%s' for writing.", file))
+    end
+  else
+    error(string.format("Failed to connect to %s", url))
+  end
+end
+
 local function checkUpdates()
   local didUpdate = false
   local handle = http.get("https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/shop.lua")
@@ -160,7 +175,7 @@ local function checkUpdates()
       if a[1] == "char" then
         if a[2] == "y" then
           fs.delete(shell.getRunningProgram())
-          shell.run("wget https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/shop.lua startup")
+          getFile("https://raw.githubusercontent.com/Fatboychummy-CC/Simplify-Shop/master/shop.lua", shell.getRunningProgram())
           print("Update complete.")
           didUpdate = true
           break
