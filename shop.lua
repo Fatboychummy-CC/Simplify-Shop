@@ -2005,7 +2005,7 @@ local function doPurchase(data,updoot)
   if selection and tx.to == pubKey then
     logger.info("Payment being processed.")
     local item = sIL[selection]
-    if item.count > 0 then
+    if item and item.count > 0 then
       local paid = tx.value
       local items_required = math.floor(paid/item.price)
       local items_grabbed = grabItems(item.find,item.damage,items_required)
