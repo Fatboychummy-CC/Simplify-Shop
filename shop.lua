@@ -1,6 +1,6 @@
 --[[
-30
-Fix overpaying in refunds when price and amount of items given is very small + Simplify the logic for overpaying + fix shop not writing to the correct file on updating.
+31
+Fix shop crashing when there is none of a specified item and it is selected.
 
 
     SIMPLIFY Shop
@@ -8,7 +8,7 @@ made by fatmanchummy
 ----https://github.com/Fatboychummy-CC/Simplify-Shop/blob/master/LICENSE
 ]]
 
-local version = 30
+local version = 31
 local tArgs = {...}
 
 local params = {
